@@ -225,7 +225,7 @@ export function AdminClients({
                 <div>
                   <label className="text-xs font-medium block mb-1.5">Monthly Plan (₱) <span className="text-destructive">*</span></label>
                   <select value={form.plan} onChange={(e) => f("plan", e.target.value)} className="w-full px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                    {[500, 800, 1000, 1500, 2000].map((p) => <option key={p} value={p}>₱{p.toLocaleString()}/month</option>)}
+                    {[500, 1000, 1200, 1500, 2000].map((p) => <option key={p} value={p}>₱{p.toLocaleString()}/month</option>)}
                   </select>
                 </div>
                 <div>
