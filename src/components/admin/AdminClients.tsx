@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { AlertTriangle, CreditCard, Edit2, Plus, Trash2, X, History } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
+import { EditPaymentModal } from "./EditPaymentModal";
 import { daysDiff, formatCurrency } from "../../utils";
-import type { Client, ClientFormData, ClientStatus } from "../../types";
+import type { Client, ClientFormData, ClientStatus, Payment } from "../../types";
 
 const EMPTY_FORM: ClientFormData = {
   name: "",
@@ -29,6 +30,8 @@ export function AdminClients({
   const [form, setForm] = useState<ClientFormData>(EMPTY_FORM);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [historyTarget, setHistoryTarget] = useState<Client | null>(null);
+  const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
+  const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [formError, setFormError] = useState("");
 
@@ -115,6 +118,53 @@ export function AdminClients({
   const handleDelete = (id: string) => {
     setClients((prev) => prev.filter((c) => c.id !== id));
     setDeleteConfirm(null);
+  };
+
+  const handleSavePaymentEdit = (updatedPayment: Payment) => {
+    if (!historyTarget) return;
+    
+    setClients((prev) =>
+      prev.map((c) =>
+        c.id === historyTarget.id
+          ? {
+              ...c,
+              payments: c.payments.map((p) =>
+                p.id === updatedPayment.id ? updatedPayment : p
+              ),
+            }
+          : c
+      )
+    );
+    
+    setEditingPayment(null);
+    setHistoryTarget(prev => prev ? {
+      ...prev,
+      payments: prev.payments.map((p) =>
+        p.id === updatedPayment.id ? updatedPayment : p
+      ),
+    } : null);
+  };
+
+  const handleDeletePayment = (paymentId: string) => {
+    if (!historyTarget) return;
+    
+    setClients((prev) =>
+      prev.map((c) =>
+        c.id === historyTarget.id
+          ? {
+              ...c,
+              payments: c.payments.filter((p) => p.id !== paymentId),
+            }
+          : c
+      )
+    );
+    
+    setHistoryTarget(prev => prev ? {
+      ...prev,
+      payments: prev.payments.filter((p) => p.id !== paymentId),
+    } : null);
+    
+    setDeletePaymentId(null);
   };
 
   const f = (key: keyof ClientFormData, val: string) => setForm((prev) => ({ ...prev, [key]: val }));
@@ -286,18 +336,58 @@ export function AdminClients({
             ) : (
               <div className="space-y-2 max-h-80 overflow-y-auto">
                 {historyTarget.payments.map((payment) => (
-                  <div key={payment.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5">
+                  <div key={payment.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2.5 hover:bg-accent/50 transition-colors group">
                     <div>
                       <p className="font-medium">{payment.month}</p>
                       <p className="text-xs text-muted-foreground">{payment.date} • {payment.method}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-semibold">{formatCurrency(payment.amount)}</p>
+                    <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <p className="font-semibold">{formatCurrency(payment.amount)}</p>
+                      </div>
+                      <button
+                        onClick={() => setEditingPayment(payment)}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-blue-100 transition-all text-muted-foreground hover:text-blue-700"
+                        title="Edit payment"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setDeletePaymentId(payment.id)}
+                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-100 transition-all text-muted-foreground hover:text-red-700"
+                        title="Delete payment"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {editingPayment && (
+        <EditPaymentModal
+          payment={editingPayment}
+          onClose={() => setEditingPayment(null)}
+          onSave={handleSavePaymentEdit}
+        />
+      )}
+
+      {deletePaymentId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-card border border-border rounded-xl p-6 max-w-sm w-full shadow-xl">
+            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+              <Trash2 className="w-5 h-5 text-red-600" />
+            </div>
+            <h3 className="font-semibold mb-1">Delete Payment?</h3>
+            <p className="text-sm text-muted-foreground mb-5">This payment record will be permanently removed. This action cannot be undone.</p>
+            <div className="flex gap-3 justify-end">
+              <button onClick={() => setDeletePaymentId(null)} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">Cancel</button>
+              <button onClick={() => handleDeletePayment(deletePaymentId)} className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg font-semibold hover:opacity-90 transition">Delete</button>
+            </div>
           </div>
         </div>
       )}
