@@ -17,7 +17,7 @@ const initialClients = [
     installDate: "2025-02-10",
     dueDate: "2026-07-10",
     status: "overdue",
-    password: "reyes123",
+    password: "demo-password-001",
     payments: [{ id: "P001", month: "June 2026", date: "2026-06-10", amount: 500, method: "GCash" }],
   },
   {
@@ -29,7 +29,7 @@ const initialClients = [
     installDate: "2025-03-15",
     dueDate: "2026-07-13",
     status: "active",
-    password: "santos123",
+    password: "demo-password-002",
     payments: [{ id: "P002", month: "June 2026", date: "2026-06-12", amount: 500, method: "Cash" }],
   },
 ];
