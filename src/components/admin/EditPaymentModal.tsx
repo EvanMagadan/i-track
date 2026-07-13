@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Edit2, X } from "lucide-react";
-import { toLocalDateStr } from "../../utils";
 import type { Payment } from "../../types";
 
 export function EditPaymentModal({
