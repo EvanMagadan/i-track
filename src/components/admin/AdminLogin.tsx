@@ -86,11 +86,6 @@ export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: (
               {loading ? "Authenticating…" : "Access Admin Panel"}
             </button>
           </form>
-
-          <div className="mt-6 bg-muted rounded-lg px-3 py-3 text-xs text-muted-foreground">
-            <p className="font-semibold mb-1">Demo note</p>
-            <p>Set VITE_ADMIN_USERNAME and VITE_ADMIN_PASSWORD in your environment to change the admin login.</p>
-          </div>
         </div>
       </main>
     </div>
