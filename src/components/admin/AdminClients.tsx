@@ -36,6 +36,7 @@ export function AdminClients({
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [formError, setFormError] = useState("");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const filtered = clients.filter(
     (c) =>
@@ -119,13 +120,16 @@ export function AdminClients({
 
   const handleDelete = async (id: string) => {
     try {
+      setDeleteError(null);
+      console.log(`Starting delete for client ${id}...`);
       await deleteClient(id);
+      console.log(`Delete successful, updating UI...`);
       setClients((prev) => prev.filter((c) => c.id !== id));
       setDeleteConfirm(null);
     } catch (error) {
-      console.error("Failed to delete client:", error);
-      // Re-enable delete button by clearing state if it failed
-      setDeleteConfirm(null);
+      const message = error instanceof Error ? error.message : "Failed to delete client";
+      console.error("Delete failed:", error);
+      setDeleteError(message);
     }
   };
 
@@ -409,8 +413,14 @@ export function AdminClients({
             </div>
             <h3 className="font-semibold mb-1">Delete Client?</h3>
             <p className="text-sm text-muted-foreground mb-5">This will permanently remove the client and all their billing records. This action cannot be undone.</p>
+            {deleteError && (
+              <div className="flex items-start gap-2 text-destructive text-xs bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2 mb-5">
+                <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                {deleteError}
+              </div>
+            )}
             <div className="flex gap-3 justify-end">
-              <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">Cancel</button>
+              <button onClick={() => { setDeleteConfirm(null); setDeleteError(null); }} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">Cancel</button>
               <button onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg font-semibold hover:opacity-90 transition">Delete</button>
             </div>
           </div>
