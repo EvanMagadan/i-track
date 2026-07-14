@@ -95,7 +95,7 @@ export function AdminClients({
         password: form.password,
         payments: [],
       };
-      setClients((prev) => [...prev, newClient]);
+      setClients((prev) => [newClient, ...prev]);
     } else if (modal === "edit" && editTarget) {
       setClients((prev) =>
         prev.map((c) =>
