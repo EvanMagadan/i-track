@@ -69,11 +69,15 @@ async function deleteClientFromStore(clientId: string) {
 
 export default function App() {
   const [view, setView] = useState<View>(() => {
-    const savedView = localStorage.getItem("adminLoggedIn");
-    return savedView === "true" ? "admin" : "landing";
+    const savedAdmin = localStorage.getItem("adminLoggedIn");
+    if (savedAdmin === "true") return "admin";
+    const savedClientId = localStorage.getItem("loggedInClientId");
+    return savedClientId ? "client-dashboard" : "landing";
   });
   const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
-  const [loggedInClientId, setLoggedInClientId] = useState<string | null>(null);
+  const [loggedInClientId, setLoggedInClientId] = useState<string | null>(() => {
+    return localStorage.getItem("loggedInClientId");
+  });
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -103,17 +107,20 @@ export default function App() {
 
   const handleClientLogin = (c: Client) => {
     setLoggedInClientId(c.id);
+    localStorage.setItem("loggedInClientId", c.id);
     setView("client-dashboard");
   };
 
   const handleClientActivation = (c: Client, newPassword: string) => {
     setClients((prev) => prev.map((cl) => (cl.id === c.id ? { ...cl, password: newPassword } : cl)));
     setLoggedInClientId(c.id);
+    localStorage.setItem("loggedInClientId", c.id);
     setView("client-dashboard");
   };
 
   const handleClientLogout = () => {
     setLoggedInClientId(null);
+    localStorage.removeItem("loggedInClientId");
     setView("landing");
   };
 
