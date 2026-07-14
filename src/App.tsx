@@ -7,6 +7,7 @@ import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { INITIAL_CLIENTS } from "./data";
 import { supabase, supabaseAdmin } from "./lib/supabase";
+import { daysDiff } from "./utils";
 import type { Client, View } from "./types";
 
 async function readClientsFromStore(): Promise<Client[]> {
@@ -18,18 +19,27 @@ async function readClientsFromStore(): Promise<Client[]> {
     return INITIAL_CLIENTS;
   }
 
-  return (data ?? []).map((item) => ({
-    id: item.id,
-    name: item.name,
-    address: item.address ?? "",
-    plan: Number(item.plan ?? 0),
-    phone: item.phone ?? "",
-    installDate: item.install_date ?? "",
-    dueDate: item.due_date ?? "",
-    status: (item.status as Client["status"]) ?? "active",
-    password: item.password ?? "",
-    payments: Array.isArray(item.payments) ? item.payments : [],
-  }));
+  return (data ?? []).map((item) => {
+    const client: Client = {
+      id: item.id,
+      name: item.name,
+      address: item.address ?? "",
+      plan: Number(item.plan ?? 0),
+      phone: item.phone ?? "",
+      installDate: item.install_date ?? "",
+      dueDate: item.due_date ?? "",
+      status: (item.status as Client["status"]) ?? "active",
+      password: item.password ?? "",
+      payments: Array.isArray(item.payments) ? item.payments : [],
+    };
+    
+    // Automatically set status to "overdue" if due date has passed and still "active"
+    if (daysDiff(client.dueDate) > 0 && client.status === "active") {
+      client.status = "overdue";
+    }
+    
+    return client;
+  });
 }
 
 async function writeClientsToStore(clients: Client[]) {
