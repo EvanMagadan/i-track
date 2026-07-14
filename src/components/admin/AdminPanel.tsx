@@ -11,10 +11,12 @@ import type { AdminTab, Client, Payment } from "../../types";
 export function AdminPanel({
   clients,
   setClients,
+  deleteClient,
   onLogout,
 }: {
   clients: Client[];
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
+  deleteClient: (clientId: string) => Promise<void>;
   onLogout: () => void;
 }) {
   const [tab, setTab] = useState<AdminTab>("overview");
@@ -101,7 +103,7 @@ export function AdminPanel({
 
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {tab === "overview" && <AdminOverview clients={clients} overdue={overdue} preDue={preDue} setTab={setTab} />}
-          {tab === "clients" && <AdminClients clients={clients} setClients={setClients} onOpenPayment={setPaymentTarget} />}
+          {tab === "clients" && <AdminClients clients={clients} setClients={setClients} deleteClient={deleteClient} onOpenPayment={setPaymentTarget} />}
           {tab === "calendar" && <AdminCalendar clients={clients} />}
           {tab === "alerts" && <AdminAlerts overdue={overdue} preDue={preDue} onRecordPayment={setPaymentTarget} />}
         </main>

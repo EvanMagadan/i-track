@@ -56,8 +56,22 @@ async function writeClientsToStore(clients: Client[]) {
   }
 }
 
+async function deleteClientFromStore(clientId: string) {
+  if (!supabase) return;
+
+  const { error } = await supabase.from("clients").delete().eq("id", clientId);
+
+  if (error) {
+    console.error("Failed to delete client from Supabase", error);
+    return;
+  }
+}
+
 export default function App() {
-  const [view, setView] = useState<View>("landing");
+  const [view, setView] = useState<View>(() => {
+    const savedView = localStorage.getItem("adminLoggedIn");
+    return savedView === "true" ? "admin" : "landing";
+  });
   const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
   const [loggedInClientId, setLoggedInClientId] = useState<string | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -127,11 +141,29 @@ export default function App() {
   }
 
   if (view === "admin-login") {
-    return <AdminLogin onLogin={() => setView("admin")} onBack={() => setView("landing")} />;
+    return (
+      <AdminLogin
+        onLogin={() => {
+          localStorage.setItem("adminLoggedIn", "true");
+          setView("admin");
+        }}
+        onBack={() => setView("landing")}
+      />
+    );
   }
 
   if (view === "admin") {
-    return <AdminPanel clients={clients} setClients={setClients} onLogout={() => setView("landing")} />;
+    return (
+      <AdminPanel
+        clients={clients}
+        setClients={setClients}
+        deleteClient={deleteClientFromStore}
+        onLogout={() => {
+          localStorage.removeItem("adminLoggedIn");
+          setView("landing");
+        }}
+      />
+    );
   }
 
   return null;

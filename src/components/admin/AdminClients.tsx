@@ -19,10 +19,12 @@ const EMPTY_FORM: ClientFormData = {
 export function AdminClients({
   clients,
   setClients,
+  deleteClient,
   onOpenPayment,
 }: {
   clients: Client[];
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
+  deleteClient: (clientId: string) => Promise<void>;
   onOpenPayment: (c: Client) => void;
 }) {
   const [modal, setModal] = useState<null | "add" | "edit">(null);
@@ -115,9 +117,16 @@ export function AdminClients({
     setModal(null);
   };
 
-  const handleDelete = (id: string) => {
-    setClients((prev) => prev.filter((c) => c.id !== id));
-    setDeleteConfirm(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteClient(id);
+      setClients((prev) => prev.filter((c) => c.id !== id));
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Failed to delete client:", error);
+      // Re-enable delete button by clearing state if it failed
+      setDeleteConfirm(null);
+    }
   };
 
   const handleSavePaymentEdit = (updatedPayment: Payment) => {
@@ -386,7 +395,7 @@ export function AdminClients({
             <p className="text-sm text-muted-foreground mb-5">This payment record will be permanently removed. This action cannot be undone.</p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeletePaymentId(null)} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">Cancel</button>
-              <button onClick={() => handleDeletePayment(deletePaymentId)} className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg font-semibold hover:opacity-90 transition">Delete</button>
+              <button onClick={() => deletePaymentId && handleDeletePayment(deletePaymentId)} className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg font-semibold hover:opacity-90 transition">Delete</button>
             </div>
           </div>
         </div>
@@ -402,7 +411,7 @@ export function AdminClients({
             <p className="text-sm text-muted-foreground mb-5">This will permanently remove the client and all their billing records. This action cannot be undone.</p>
             <div className="flex gap-3 justify-end">
               <button onClick={() => setDeleteConfirm(null)} className="px-4 py-2 text-sm rounded-lg border border-border hover:bg-accent transition-colors">Cancel</button>
-              <button onClick={() => handleDelete(deleteConfirm)} className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg font-semibold hover:opacity-90 transition">Delete</button>
+              <button onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="px-4 py-2 text-sm bg-destructive text-destructive-foreground rounded-lg font-semibold hover:opacity-90 transition">Delete</button>
             </div>
           </div>
         </div>
