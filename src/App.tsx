@@ -6,7 +6,7 @@ import { ClientDashboard } from "./components/client/ClientDashboard";
 import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { INITIAL_CLIENTS } from "./data";
-import { supabase } from "./lib/supabase";
+import { supabase, supabaseAdmin } from "./lib/supabase";
 import type { Client, View } from "./types";
 
 async function readClientsFromStore(): Promise<Client[]> {
@@ -57,14 +57,39 @@ async function writeClientsToStore(clients: Client[]) {
 }
 
 async function deleteClientFromStore(clientId: string) {
-  if (!supabase) return;
+  // Use admin client to bypass RLS policies
+  const client = supabaseAdmin || supabase;
+  
+  if (!client) throw new Error("Supabase not configured");
 
-  const { error } = await supabase.from("clients").delete().eq("id", clientId);
+  console.log(`🗑️ Deleting client ${clientId} from Supabase...`);
+
+  const { error, data } = await client.from("clients").delete().eq("id", clientId).select();
+
+  console.log("Delete response:", { error, data });
 
   if (error) {
-    console.error("Failed to delete client from Supabase", error);
-    return;
+    console.error("❌ Failed to delete client from Supabase", error);
+    throw new Error(`Delete failed: ${error.message}`);
   }
+
+  // Verify deletion by checking if record still exists
+  const { data: checkData, error: checkError } = await client
+    .from("clients")
+    .select("id")
+    .eq("id", clientId)
+    .single();
+
+  if (checkError && checkError.code !== "PGRST116") {
+    // PGRST116 = not found (which is what we want)
+    console.error("Error verifying deletion:", checkError);
+  }
+
+  if (checkData) {
+    throw new Error("Client deletion failed: record still exists in database");
+  }
+
+  console.log(`✅ Client ${clientId} successfully deleted from Supabase`);
 }
 
 export default function App() {
