@@ -105,6 +105,12 @@ export default function App() {
   });
   const [isLoaded, setIsLoaded] = useState(false);
 
+  const handleClientLogout = () => {
+    setLoggedInClientId(null);
+    localStorage.removeItem("loggedInClientId");
+    setView("landing");
+  };
+
   useEffect(() => {
     const loadClients = async () => {
       try {
@@ -143,12 +149,6 @@ export default function App() {
     setView("client-dashboard");
   };
 
-  const handleClientLogout = () => {
-    setLoggedInClientId(null);
-    localStorage.removeItem("loggedInClientId");
-    setView("landing");
-  };
-
   if (view === "landing") {
     return <Landing onClientPortal={() => setView("client-login")} onAdminPanel={() => setView("admin-login")} />;
   }
@@ -166,6 +166,18 @@ export default function App() {
 
   if (view === "client-signup") {
     return <ClientSignup clients={clients} onActivated={handleClientActivation} onBack={() => setView("client-login")} />;
+  }
+
+  if (view === "client-dashboard" && !loggedInClient) {
+    // Client was deleted or logged out, redirect to login
+    return (
+      <ClientLogin
+        clients={clients}
+        onLogin={handleClientLogin}
+        onSignup={() => setView("client-signup")}
+        onBack={() => setView("landing")}
+      />
+    );
   }
 
   if (view === "client-dashboard" && loggedInClient) {
