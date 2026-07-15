@@ -6,30 +6,34 @@ import { ClientDashboard } from "./components/client/ClientDashboard";
 import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { INITIAL_CLIENTS } from "./data";
+import { supabase } from "./lib/supabase";
 import { daysDiff } from "./utils";
 import type { Client, View } from "./types";
 
 async function readClientsFromStore(): Promise<Client[]> {
+  if (!supabase) {
+    throw new Error("Supabase is not configured in the environment");
+  }
+
   try {
-    const response = await fetch("/api/clients");
-    if (!response.ok) throw new Error(`Failed to load clients: ${response.status}`);
+    const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
 
-    const data = (await response.json()) as unknown;
-    if (!Array.isArray(data)) return INITIAL_CLIENTS;
+    if (error) {
+      throw error;
+    }
 
-    return data.map((item) => {
-      const client = item as Client;
+    return (data ?? []).map((item) => {
       const normalized: Client = {
-        id: client.id,
-        name: client.name,
-        address: client.address ?? "",
-        plan: Number(client.plan ?? 0),
-        phone: client.phone ?? "",
-        installDate: client.installDate ?? "",
-        dueDate: client.dueDate ?? "",
-        status: (client.status as Client["status"]) ?? "active",
-        password: client.password ?? "",
-        payments: Array.isArray(client.payments) ? client.payments : [],
+        id: item.id,
+        name: item.name,
+        address: item.address ?? "",
+        plan: Number(item.plan ?? 0),
+        phone: item.phone ?? "",
+        installDate: item.install_date ?? "",
+        dueDate: item.due_date ?? "",
+        status: (item.status as Client["status"]) ?? "active",
+        password: item.password ?? "",
+        payments: Array.isArray(item.payments) ? item.payments : [],
       };
 
       if (daysDiff(normalized.dueDate) > 0 && normalized.status === "active") {
@@ -39,32 +43,41 @@ async function readClientsFromStore(): Promise<Client[]> {
       return normalized;
     });
   } catch (error) {
-    console.error("Failed to load clients from API", error);
+    console.error("Failed to load clients from Supabase", error);
     return INITIAL_CLIENTS;
   }
 }
 
 async function writeClientsToStore(clients: Client[]) {
-  try {
-    const response = await fetch("/api/clients", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(clients),
-    });
+  if (!supabase) return;
 
-    if (!response.ok) {
-      throw new Error(`Failed to save clients: ${response.status}`);
+  try {
+    const payload = clients.map((client) => ({
+      id: client.id,
+      name: client.name,
+      address: client.address,
+      plan: client.plan,
+      phone: client.phone,
+      install_date: client.installDate,
+      due_date: client.dueDate,
+      status: client.status,
+      password: client.password,
+      payments: client.payments,
+    }));
+
+    const { error } = await supabase.from("clients").upsert(payload);
+
+    if (error) {
+      throw error;
     }
   } catch (error) {
-    console.error("Failed to save clients to API", error);
+    console.error("Failed to save clients to Supabase", error);
   }
 }
 
 async function deleteClientFromStore(clientId: string) {
   try {
-    const response = await fetch(`/api/clients?id=${encodeURIComponent(clientId)}`, {
-      method: "DELETE",
-    });
+    const response = await fetch(`/api/clients?id=${encodeURIComponent(clientId)}`, { method: "DELETE" });
 
     if (!response.ok) {
       throw new Error(`Delete failed: ${response.status}`);
