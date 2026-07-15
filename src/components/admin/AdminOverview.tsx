@@ -7,12 +7,12 @@ import type { Client, AdminTab } from "../../types";
 export function AdminOverview({
   clients,
   overdue,
-  preDue,
+  cutoff,
   setTab,
 }: {
   clients: Client[];
   overdue: Client[];
-  preDue: Client[];
+  cutoff: Client[];
   setTab: (t: AdminTab) => void;
 }) {
   const active = clients.filter((c) => c.status === "active");
@@ -43,19 +43,21 @@ export function AdminOverview({
       </div>
 
       <div className="space-y-4 mb-6">
-        {preDue.length > 0 && (
+        {cutoff.length > 0 && (
           <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-amber-600" />
-              <h3 className="font-semibold text-amber-800 text-sm">Due Tomorrow ({preDue.length})</h3>
+              <h3 className="font-semibold text-amber-800 text-sm">Overdue 3+ Days ({cutoff.length})</h3>
             </div>
             <div className="space-y-2">
-              {preDue.map((c) => (
+              {cutoff.map((c) => {
+                const days = daysDiff(c.dueDate);
+                return (
                 <div key={c.id} className="flex items-center justify-between text-sm">
                   <span className="font-medium text-amber-900">{c.name}</span>
-                  <span className="font-mono text-amber-700 font-semibold">{formatCurrency(c.plan)}</span>
+                  <span className="font-mono text-amber-700 font-semibold">{formatCurrency(c.plan)} · {days}d late</span>
                 </div>
-              ))}
+              );})}
             </div>
           </div>
         )}

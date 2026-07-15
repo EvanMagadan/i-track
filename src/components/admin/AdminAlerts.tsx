@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle, Clock, CreditCard } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { daysDiff, formatCurrency } from "../../utils";
@@ -6,15 +6,34 @@ import type { Client } from "../../types";
 
 export function AdminAlerts({
   overdue,
-  preDue,
+  cutoff,
   onRecordPayment,
 }: {
   overdue: Client[];
-  preDue: Client[];
+  cutoff: Client[];
   onRecordPayment: (c: Client) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<"overdue" | "predue">("overdue");
-  const list = activeTab === "overdue" ? overdue : preDue;
+  const [activeTab, setActiveTab] = useState<"overdue" | "cutoff">("overdue");
+  const [sortBy, setSortBy] = useState<"daysAsc" | "daysDesc" | "dueDateAsc" | "dueDateDesc" | "monthAsc">("daysAsc");
+  const list = activeTab === "overdue" ? overdue : cutoff;
+
+  const sortedList = useMemo(() => {
+    const next = [...list];
+    return next.sort((a, b) => {
+      const aDays = daysDiff(a.dueDate);
+      const bDays = daysDiff(b.dueDate);
+
+      if (sortBy === "daysAsc") return aDays - bDays || a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
+      if (sortBy === "daysDesc") return bDays - aDays || a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
+      if (sortBy === "dueDateDesc") return b.dueDate.localeCompare(a.dueDate) || a.name.localeCompare(b.name);
+      if (sortBy === "monthAsc") {
+        const aMonth = a.dueDate.slice(0, 7);
+        const bMonth = b.dueDate.slice(0, 7);
+        return aMonth.localeCompare(bMonth) || a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
+      }
+      return a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
+    });
+  }, [list, sortBy]);
 
   return (
     <div>
@@ -37,17 +56,35 @@ export function AdminAlerts({
           </span>
         </button>
         <button
-          onClick={() => setActiveTab("predue")}
+          onClick={() => setActiveTab("cutoff")}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors border ${
-            activeTab === "predue" ? "bg-amber-500 text-white border-amber-500" : "border-border hover:bg-accent"
+            activeTab === "cutoff" ? "bg-amber-500 text-white border-amber-500" : "border-border hover:bg-accent"
           }`}
         >
           <Clock className="w-4 h-4" />
-          Due Tomorrow
-          <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${activeTab === "predue" ? "bg-white/20" : "bg-amber-100 text-amber-700"}`}>
-            {preDue.length}
+          Overdue 3+ Days
+          <span className={`font-mono text-xs px-1.5 py-0.5 rounded ${activeTab === "cutoff" ? "bg-white/20" : "bg-amber-100 text-amber-700"}`}>
+            {cutoff.length}
           </span>
         </button>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
+        <p className="text-xs text-muted-foreground">Sort the current alert list by days overdue, due date, or month.</p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Sort by</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+            className="px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option value="daysAsc">Smallest days first</option>
+            <option value="daysDesc">Largest days first</option>
+            <option value="dueDateAsc">Due date, soonest first</option>
+            <option value="dueDateDesc">Due date, latest first</option>
+            <option value="monthAsc">Month</option>
+          </select>
+        </div>
       </div>
 
       {list.length === 0 ? (
@@ -56,11 +93,11 @@ export function AdminAlerts({
             <CheckCircle className="w-6 h-6 text-green-600" />
           </div>
           <p className="font-semibold">All clear</p>
-          <p className="text-muted-foreground text-sm mt-1">No {activeTab === "overdue" ? "overdue accounts" : "accounts due tomorrow"}.</p>
+          <p className="text-muted-foreground text-sm mt-1">No {activeTab === "overdue" ? "overdue accounts" : "accounts overdue by 3+ days"}.</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {list.map((c) => {
+          {sortedList.map((c) => {
             const days = daysDiff(c.dueDate);
             return (
               <div key={c.id} className={`bg-card border rounded-xl px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${activeTab === "overdue" ? "border-red-200" : "border-amber-200"}`}>
@@ -86,7 +123,7 @@ export function AdminAlerts({
                   ) : (
                     <div className="bg-amber-100 text-amber-700 rounded-xl px-3 py-2.5 text-center min-w-[76px]">
                       <Clock className="w-5 h-5 mx-auto" />
-                      <p className="text-xs font-semibold mt-1">Due Tomorrow</p>
+                      <p className="text-xs font-semibold mt-1">3+ Days Overdue</p>
                     </div>
                   )}
                   <button onClick={() => onRecordPayment(c)} className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 transition shrink-0" title="Record payment">
