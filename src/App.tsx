@@ -6,100 +6,73 @@ import { ClientDashboard } from "./components/client/ClientDashboard";
 import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { INITIAL_CLIENTS } from "./data";
-import { supabase, supabaseAdmin } from "./lib/supabase";
 import { daysDiff } from "./utils";
 import type { Client, View } from "./types";
 
 async function readClientsFromStore(): Promise<Client[]> {
-  if (!supabase) return INITIAL_CLIENTS;
+  try {
+    const response = await fetch("/api/clients");
+    if (!response.ok) throw new Error(`Failed to load clients: ${response.status}`);
 
-  const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
-  if (error) {
-    console.error("Failed to load clients from Supabase", error);
+    const data = (await response.json()) as unknown;
+    if (!Array.isArray(data)) return INITIAL_CLIENTS;
+
+    return data.map((item) => {
+      const client = item as Client;
+      const normalized: Client = {
+        id: client.id,
+        name: client.name,
+        address: client.address ?? "",
+        plan: Number(client.plan ?? 0),
+        phone: client.phone ?? "",
+        installDate: client.installDate ?? "",
+        dueDate: client.dueDate ?? "",
+        status: (client.status as Client["status"]) ?? "active",
+        password: client.password ?? "",
+        payments: Array.isArray(client.payments) ? client.payments : [],
+      };
+
+      if (daysDiff(normalized.dueDate) > 0 && normalized.status === "active") {
+        normalized.status = "overdue";
+      }
+
+      return normalized;
+    });
+  } catch (error) {
+    console.error("Failed to load clients from API", error);
     return INITIAL_CLIENTS;
   }
-
-  return (data ?? []).map((item) => {
-    const client: Client = {
-      id: item.id,
-      name: item.name,
-      address: item.address ?? "",
-      plan: Number(item.plan ?? 0),
-      phone: item.phone ?? "",
-      installDate: item.install_date ?? "",
-      dueDate: item.due_date ?? "",
-      status: (item.status as Client["status"]) ?? "active",
-      password: item.password ?? "",
-      payments: Array.isArray(item.payments) ? item.payments : [],
-    };
-    
-    // Automatically set status to "overdue" if due date has passed and still "active"
-    if (daysDiff(client.dueDate) > 0 && client.status === "active") {
-      client.status = "overdue";
-    }
-    
-    return client;
-  });
 }
 
 async function writeClientsToStore(clients: Client[]) {
-  if (!supabase) return;
-
-  for (const client of clients) {
-    const { error } = await supabase.from("clients").upsert({
-      id: client.id,
-      name: client.name,
-      address: client.address,
-      plan: client.plan,
-      phone: client.phone,
-      install_date: client.installDate,
-      due_date: client.dueDate,
-      status: client.status,
-      password: client.password,
-      payments: client.payments,
+  try {
+    const response = await fetch("/api/clients", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(clients),
     });
 
-    if (error) {
-      console.error("Failed to save clients to Supabase", error);
-      return;
+    if (!response.ok) {
+      throw new Error(`Failed to save clients: ${response.status}`);
     }
+  } catch (error) {
+    console.error("Failed to save clients to API", error);
   }
 }
 
 async function deleteClientFromStore(clientId: string) {
-  // Use admin client to bypass RLS policies
-  const client = supabaseAdmin || supabase;
-  
-  if (!client) throw new Error("Supabase not configured");
+  try {
+    const response = await fetch(`/api/clients?id=${encodeURIComponent(clientId)}`, {
+      method: "DELETE",
+    });
 
-  console.log(`🗑️ Deleting client ${clientId} from Supabase...`);
-
-  const { error, data } = await client.from("clients").delete().eq("id", clientId).select();
-
-  console.log("Delete response:", { error, data });
-
-  if (error) {
-    console.error("❌ Failed to delete client from Supabase", error);
-    throw new Error(`Delete failed: ${error.message}`);
+    if (!response.ok) {
+      throw new Error(`Delete failed: ${response.status}`);
+    }
+  } catch (error) {
+    console.error("Failed to delete client via API", error);
+    throw error instanceof Error ? error : new Error("Delete failed");
   }
-
-  // Verify deletion by checking if record still exists
-  const { data: checkData, error: checkError } = await client
-    .from("clients")
-    .select("id")
-    .eq("id", clientId)
-    .single();
-
-  if (checkError && checkError.code !== "PGRST116") {
-    // PGRST116 = not found (which is what we want)
-    console.error("Error verifying deletion:", checkError);
-  }
-
-  if (checkData) {
-    throw new Error("Client deletion failed: record still exists in database");
-  }
-
-  console.log(`✅ Client ${clientId} successfully deleted from Supabase`);
 }
 
 export default function App() {

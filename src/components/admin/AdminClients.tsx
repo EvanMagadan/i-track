@@ -195,14 +195,14 @@ export function AdminClients({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6">
+        <div className="space-y-0.5">
           <h1 className="text-xl font-bold">Client Management</h1>
           <p className="text-muted-foreground text-sm">{clients.length} registered client{clients.length !== 1 ? "s" : ""}</p>
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 active:opacity-80 transition"
+          className="flex items-center justify-center gap-2 bg-primary text-primary-foreground text-sm font-semibold px-4 py-2 rounded-lg hover:opacity-90 active:opacity-80 transition w-full sm:w-auto"
         >
           <Plus className="w-4 h-4" />
           Add Client
@@ -210,20 +210,20 @@ export function AdminClients({
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-border flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, address, or ID…"
-            className="w-full lg:max-w-sm px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full lg:max-w-sm px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
             <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Sort by</span>
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-              className="px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              className="w-full sm:w-auto px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="name">Alphabetical A-Z</option>
               <option value="dueDateAsc">Due date, soonest first</option>
@@ -247,18 +247,18 @@ export function AdminClients({
               {filtered.map((c) => {
                 const days = daysDiff(c.dueDate);
                 return (
-                  <tr key={c.id} className="border-b border-border/40 last:border-0 hover:bg-accent/40 transition-colors">
-                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{c.id}</td>
-                    <td className="px-4 py-3 font-medium">{c.name}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell max-w-[160px] truncate">{c.address}</td>
-                    <td className="px-4 py-3 font-mono font-semibold">{formatCurrency(c.plan)}</td>
-                    <td className="px-4 py-3 font-mono text-xs">
+                    <tr key={c.id} className="border-b border-border/40 last:border-0 hover:bg-accent/40 transition-colors">
+                    <td className="px-3 sm:px-4 py-3.5 font-mono text-xs text-muted-foreground">{c.id}</td>
+                    <td className="px-3 sm:px-4 py-3.5 font-medium">{c.name}</td>
+                    <td className="px-3 sm:px-4 py-3.5 text-xs text-muted-foreground hidden lg:table-cell max-w-[160px] truncate">{c.address}</td>
+                    <td className="px-3 sm:px-4 py-3.5 font-mono font-semibold">{formatCurrency(c.plan)}</td>
+                    <td className="px-3 sm:px-4 py-3.5 font-mono text-xs whitespace-nowrap">
                       <span className={days > 0 ? "text-destructive font-semibold" : ""}>{c.dueDate}</span>
-                      {days > 0 && <span className="ml-1.5 bg-red-100 text-red-700 text-xs px-1.5 py-0.5 rounded font-semibold">{days}d late</span>}
+                      {days > 0 && <span className="ml-1.5 inline-flex bg-red-100 text-red-700 text-xs px-1.5 py-0.5 rounded font-semibold">{days}d late</span>}
                     </td>
-                    <td className="px-4 py-3"><StatusBadge status={c.status} /></td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
+                    <td className="px-3 sm:px-4 py-3.5"><StatusBadge status={c.status} /></td>
+                    <td className="px-3 sm:px-4 py-3.5">
+                      <div className="flex items-center flex-wrap gap-2">
                         <button onClick={() => onOpenPayment(c)} className="p-1.5 rounded-md hover:bg-green-100 transition-colors text-muted-foreground hover:text-green-700" title="Record payment">
                           <CreditCard className="w-3.5 h-3.5" />
                         </button>
