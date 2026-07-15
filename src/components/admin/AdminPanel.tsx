@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Activity, Bell, Calendar, LogOut, Menu, Users, Wifi } from "lucide-react";
 import { AdminOverview } from "./AdminOverview";
 import { AdminClients } from "./AdminClients";
@@ -22,6 +22,7 @@ export function AdminPanel({
   const [tab, setTab] = useState<AdminTab>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [paymentTarget, setPaymentTarget] = useState<Client | null>(null);
+  const mainRef = useRef<HTMLElement | null>(null);
 
   const handleRecordPayment = (clientId: string, payment: Payment) => {
     setClients((prev) =>
@@ -34,8 +35,8 @@ export function AdminPanel({
   };
 
   const overdue = useMemo(() => clients.filter((c) => daysDiff(c.dueDate) > 0), [clients]);
-  const preDue = useMemo(() => clients.filter((c) => daysDiff(c.dueDate) === -1), [clients]);
-  const alertCount = overdue.length + preDue.length;
+  const cutoff = useMemo(() => clients.filter((c) => daysDiff(c.dueDate) >= 3), [clients]);
+  const alertCount = overdue.length + cutoff.length;
 
   const navItems: { id: AdminTab; label: string; icon: React.ReactNode; badge?: number }[] = [
     { id: "overview", label: "Overview", icon: <Activity className="w-4 h-4" /> },
@@ -48,6 +49,10 @@ export function AdminPanel({
     setTab(id);
     setSidebarOpen(false);
   };
+
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [tab]);
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
@@ -101,11 +106,11 @@ export function AdminPanel({
           </nav>
         </aside>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {tab === "overview" && <AdminOverview clients={clients} overdue={overdue} preDue={preDue} setTab={setTab} />}
+        <main ref={mainRef} className="flex-1 overflow-y-auto p-4 sm:p-6">
+          {tab === "overview" && <AdminOverview clients={clients} overdue={overdue} cutoff={cutoff} setTab={setTab} />}
           {tab === "clients" && <AdminClients clients={clients} setClients={setClients} deleteClient={deleteClient} onOpenPayment={setPaymentTarget} />}
           {tab === "calendar" && <AdminCalendar clients={clients} />}
-          {tab === "alerts" && <AdminAlerts overdue={overdue} preDue={preDue} onRecordPayment={setPaymentTarget} />}
+          {tab === "alerts" && <AdminAlerts overdue={overdue} cutoff={cutoff} onRecordPayment={setPaymentTarget} />}
         </main>
       </div>
 

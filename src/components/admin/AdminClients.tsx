@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle, CreditCard, Edit2, Plus, Trash2, X, History } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { EditPaymentModal } from "./EditPaymentModal";
@@ -35,15 +35,26 @@ export function AdminClients({
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState<"name" | "dueDateAsc" | "dueDateDesc" | "status">("name");
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const filtered = clients.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.address.toLowerCase().includes(search.toLowerCase()) ||
-      c.id.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    const query = search.toLowerCase();
+    const visible = clients.filter(
+      (c) =>
+        c.name.toLowerCase().includes(query) ||
+        c.address.toLowerCase().includes(query) ||
+        c.id.toLowerCase().includes(query)
+    );
+
+    return [...visible].sort((a, b) => {
+      if (sortBy === "name") return a.name.localeCompare(b.name);
+      if (sortBy === "dueDateAsc") return a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
+      if (sortBy === "dueDateDesc") return b.dueDate.localeCompare(a.dueDate) || a.name.localeCompare(b.name);
+      return a.status.localeCompare(b.status) || a.name.localeCompare(b.name);
+    });
+  }, [clients, search, sortBy]);
 
   const openAdd = () => {
     setForm(EMPTY_FORM);
@@ -199,14 +210,27 @@ export function AdminClients({
       </div>
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="px-5 py-3 border-b border-border">
+        <div className="px-5 py-3 border-b border-border flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, address, or ID…"
-            className="w-full sm:w-80 px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full lg:max-w-sm px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Sort by</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="name">Alphabetical A-Z</option>
+              <option value="dueDateAsc">Due date, soonest first</option>
+              <option value="dueDateDesc">Due date, latest first</option>
+              <option value="status">Status</option>
+            </select>
+          </div>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
