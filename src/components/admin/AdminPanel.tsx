@@ -20,6 +20,7 @@ export function AdminPanel({
   onLogout: () => void;
 }) {
   const [tab, setTab] = useState<AdminTab>("overview");
+  const [alertsTab, setAlertsTab] = useState<"overdue" | "cutoff">("overdue");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [paymentTarget, setPaymentTarget] = useState<Client | null>(null);
   const mainRef = useRef<HTMLElement | null>(null);
@@ -45,7 +46,8 @@ export function AdminPanel({
     { id: "alerts", label: "Alerts", icon: <Bell className="w-4 h-4" />, badge: alertCount || undefined },
   ];
 
-  const handleTabChange = (id: AdminTab) => {
+  const handleTabChange = (id: AdminTab, alertTab?: "overdue" | "cutoff") => {
+    if (alertTab) setAlertsTab(alertTab);
     setTab(id);
     setSidebarOpen(false);
   };
@@ -67,7 +69,7 @@ export function AdminPanel({
         </div>
         <div className="flex items-center gap-3">
           {alertCount > 0 && (
-            <button onClick={() => handleTabChange("alerts")} className="relative p-1.5 rounded-md hover:bg-accent transition-colors">
+            <button onClick={() => handleTabChange("alerts", "overdue")} className="relative p-1.5 rounded-md hover:bg-accent transition-colors">
               <Bell className="w-4 h-4 text-muted-foreground" />
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-destructive text-destructive-foreground text-xs rounded-full flex items-center justify-center font-mono font-bold">
                 {alertCount}
@@ -107,10 +109,10 @@ export function AdminPanel({
         </aside>
 
         <main ref={mainRef} className="flex-1 overflow-y-auto p-4 sm:p-6">
-          {tab === "overview" && <AdminOverview clients={clients} overdue={overdue} cutoff={cutoff} setTab={setTab} />}
+          {tab === "overview" && <AdminOverview clients={clients} overdue={overdue} cutoff={cutoff} setTab={handleTabChange} />}
           {tab === "clients" && <AdminClients clients={clients} setClients={setClients} deleteClient={deleteClient} onOpenPayment={setPaymentTarget} />}
           {tab === "calendar" && <AdminCalendar clients={clients} />}
-          {tab === "alerts" && <AdminAlerts overdue={overdue} cutoff={cutoff} onRecordPayment={setPaymentTarget} />}
+          {tab === "alerts" && <AdminAlerts overdue={overdue} cutoff={cutoff} initialTab={alertsTab} onRecordPayment={setPaymentTarget} />}
         </main>
       </div>
 

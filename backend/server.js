@@ -72,6 +72,24 @@ app.put("/api/clients", async (req, res) => {
   res.json(clients);
 });
 
+app.delete("/api/clients", async (req, res) => {
+  const clientId = req.query.id;
+
+  if (!clientId || typeof clientId !== "string") {
+    return res.status(400).json({ success: false, message: "Client id is required" });
+  }
+
+  const nextClients = clients.filter((client) => client.id !== clientId);
+
+  if (nextClients.length === clients.length) {
+    return res.status(404).json({ success: false, message: "Client not found" });
+  }
+
+  clients = nextClients;
+  await saveClients();
+  return res.json({ success: true });
+});
+
 app.post("/api/clients/login", (req, res) => {
   const { name, password } = req.body;
   const match = clients.find(
