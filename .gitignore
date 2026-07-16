@@ -51,6 +51,3 @@ backend/data/
 .vercel/
 .next/
 
-# Ignore local data file
-src/data.ts
-
