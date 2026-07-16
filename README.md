@@ -6,14 +6,14 @@ This system provides a robust, dual-authenticated architectural ecosystem: a pri
 
 ---
 
-## 🛠️ Main Feature Capabilities
+##  Main Feature Capabilities
 
-### 👤 1. Secure Client Portal
+###  1. Secure Client Portal
 *   **Authenticated Identity Verification:** Secure login flows safeguarding individual consumer data, preventing cross-profile visibility.
 *   **Private Billing Dashboard:** Instant visibility into localized parameters including account status badges (`active`, `overdue`), current service tiers (e.g., ₱500 - ₱1000/mo), and exact billing calendar due dates.
 *   **Historical Payment Ledger:** A read-only transactional stream inside the profile displaying a clear ledger of past months credited, payments timestamped, and payment channels utilized (e.g., Cash, GCash).
 
-### 👑 2. Master Control Dashboard (Admin Panel)
+###  2. Master Control Dashboard (Admin Panel)
 *   **Operator Control Gateway:** A restricted authentication layer engineered specifically for network administrators to oversee localized operations.
 *   **Client CRM Module:** Complete CRUD (Create, Read, Update, Delete) capability to enroll new users, change physical location references, alter data plan assignments, and track active nodes.
 *   **Proactive System Alerts:**

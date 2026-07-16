@@ -1,7 +1,7 @@
 import type { Client } from "./types";
 
 const DEFAULT_ADMIN_USERNAME = import.meta.env.VITE_ADMIN_USERNAME ?? "admin";
-const DEFAULT_ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? "admin1324";
+const DEFAULT_ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD ?? "";
 
 export const INITIAL_CLIENTS: Client[] = [];
 
