@@ -104,9 +104,9 @@ export function ClientLogin({
           </form>
 
           <p className="text-sm text-muted-foreground text-center mt-6">
-            First time here?{" "}
+            {" "}
             <button onClick={onSignup} className="text-primary font-semibold hover:underline">
-              Activate your account
+              Forgot your password?
             </button>
           </p>
         </div>
