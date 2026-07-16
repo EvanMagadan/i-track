@@ -51,3 +51,5 @@ backend/data/
 .vercel/
 .next/
 
+src/data.ts
+
