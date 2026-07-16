@@ -51,8 +51,7 @@ export function ClientSignup({
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-1">Account Activation</h1>
-            <p className="text-muted-foreground text-sm">One-time setup for pre-registered clients.</p>
+            <h1 className="text-2xl font-bold mb-1">Forgot Password</h1>
             <div className="flex gap-2 mt-4">
               {([1, 2] as const).map((s) => (
                 <div
@@ -99,7 +98,7 @@ export function ClientSignup({
                 <div>
                   <p className="text-sm font-semibold text-green-800">Identity Verified</p>
                   <p className="text-xs text-green-700 mt-0.5">
-                    Welcome, {foundClient?.name}. Set your private password below.
+                    Welcome, {foundClient?.name}. Change your private password below.
                   </p>
                 </div>
               </div>
@@ -146,7 +145,7 @@ export function ClientSignup({
                 type="submit"
                 className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:opacity-90 transition"
               >
-                Activate Account
+                Change Password
               </button>
             </form>
           )}
