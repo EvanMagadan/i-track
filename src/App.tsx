@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Landing } from "./components/client/Landing";
 import { ClientLogin } from "./components/client/ClientLogin";
 import { ClientSignup } from "./components/client/ClientSignup";
@@ -10,6 +10,27 @@ import { supabase } from "./lib/supabase";
 import { daysDiff } from "./utils";
 import type { Client, View } from "./types";
 
+function formatClientItem(item: any): Client {
+  const normalized: Client = {
+    id: item.id,
+    name: item.name,
+    address: item.address ?? "",
+    plan: Number(item.plan ?? 0),
+    phone: item.phone ?? "",
+    installDate: item.install_date ?? "",
+    dueDate: item.due_date ?? "",
+    status: (item.status as Client["status"]) ?? "active",
+    password: item.password ?? "",
+    payments: Array.isArray(item.payments) ? item.payments : [],
+  };
+
+  if (daysDiff(normalized.dueDate) > 0 && normalized.status === "active") {
+    normalized.status = "overdue";
+  }
+
+  return normalized;
+}
+
 async function readClientsFromStore(): Promise<Client[]> {
   if (!supabase) {
     throw new Error("Supabase is not configured in the environment");
@@ -18,41 +39,20 @@ async function readClientsFromStore(): Promise<Client[]> {
   try {
     const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
-    return (data ?? []).map((item) => {
-      const normalized: Client = {
-        id: item.id,
-        name: item.name,
-        address: item.address ?? "",
-        plan: Number(item.plan ?? 0),
-        phone: item.phone ?? "",
-        installDate: item.install_date ?? "",
-        dueDate: item.due_date ?? "",
-        status: (item.status as Client["status"]) ?? "active",
-        password: item.password ?? "",
-        payments: Array.isArray(item.payments) ? item.payments : [],
-      };
-
-      if (daysDiff(normalized.dueDate) > 0 && normalized.status === "active") {
-        normalized.status = "overdue";
-      }
-
-      return normalized;
-    });
+    return (data ?? []).map(formatClientItem);
   } catch (error) {
     console.error("Failed to load clients from Supabase", error);
     return INITIAL_CLIENTS;
   }
 }
 
-async function writeClientsToStore(clients: Client[]) {
+async function writeSingleClientToStore(client: Client) {
   if (!supabase) return;
 
   try {
-    const payload = clients.map((client) => ({
+    const payload = {
       id: client.id,
       name: client.name,
       address: client.address,
@@ -63,15 +63,12 @@ async function writeClientsToStore(clients: Client[]) {
       status: client.status,
       password: client.password,
       payments: client.payments,
-    }));
+    };
 
     const { error } = await supabase.from("clients").upsert(payload);
-
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
   } catch (error) {
-    console.error("Failed to save clients to Supabase", error);
+    console.error("Failed to save client to Supabase", error);
   }
 }
 
@@ -107,26 +104,38 @@ export default function App() {
     setView("landing");
   };
 
-  useEffect(() => {
-    const loadClients = async () => {
-      try {
-        const data = await readClientsFromStore();
-        setClients(data);
-      } catch (error) {
-        console.error("Failed to load clients from store", error);
-      } finally {
-        setIsLoaded(true);
-      }
-    };
-
-    void loadClients();
+  const loadClients = useCallback(async () => {
+    try {
+      const data = await readClientsFromStore();
+      setClients(data);
+    } catch (error) {
+      console.error("Failed to load clients from store", error);
+    } finally {
+      setIsLoaded(true);
+    }
   }, []);
 
   useEffect(() => {
-    if (!isLoaded) return;
+    void loadClients();
 
-    void writeClientsToStore(clients);
-  }, [clients, isLoaded]);
+    if (!supabase) return;
+
+    const clientChannel = supabase
+      .channel("schema-db-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "clients" },
+        (payload) => {
+          console.log("Realtime change detected:", payload);
+          void loadClients();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(clientChannel);
+    };
+  }, [loadClients]);
 
   const loggedInClient = loggedInClientId
     ? clients.find((c) => c.id === loggedInClientId) ?? null
@@ -138,12 +147,38 @@ export default function App() {
     setView("client-dashboard");
   };
 
-  const handleClientActivation = (c: Client, newPassword: string) => {
-    setClients((prev) => prev.map((cl) => (cl.id === c.id ? { ...cl, password: newPassword } : cl)));
+  const handleClientActivation = async (c: Client, newPassword: string) => {
+    const updatedClient = { ...c, password: newPassword };
+    
+    setClients((prev) => prev.map((cl) => (cl.id === c.id ? updatedClient : cl)));
+    await writeSingleClientToStore(updatedClient);
+
     setLoggedInClientId(c.id);
     localStorage.setItem("loggedInClientId", c.id);
     setView("client-dashboard");
   };
+
+  const handleSetClients = useCallback((updateOrNextState: React.SetStateAction<Client[]>) => {
+    setClients((prev) => {
+      const nextState = typeof updateOrNextState === "function" ? updateOrNextState(prev) : updateOrNextState;
+      
+      nextState.forEach((client) => {
+        const matchingOld = prev.find((p) => p.id === client.id);
+        if (!matchingOld || JSON.stringify(matchingOld) !== JSON.stringify(client)) {
+          void writeSingleClientToStore(client);
+        }
+      });
+      return nextState;
+    });
+  }, []);
+
+  if (!isLoaded) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", fontFamily: "sans-serif", color: "#666" }}>
+        Loading project data...
+      </div>
+    );
+  }
 
   if (view === "landing") {
     return <Landing onClientPortal={() => setView("client-login")} onAdminPanel={() => setView("admin-login")} />;
@@ -165,7 +200,6 @@ export default function App() {
   }
 
   if (view === "client-dashboard" && !loggedInClient) {
-    // Client was deleted or logged out, redirect to login
     return (
       <ClientLogin
         clients={clients}
@@ -196,7 +230,7 @@ export default function App() {
     return (
       <AdminPanel
         clients={clients}
-        setClients={setClients}
+        setClients={handleSetClients}
         deleteClient={deleteClientFromStore}
         onLogout={() => {
           localStorage.removeItem("adminLoggedIn");
