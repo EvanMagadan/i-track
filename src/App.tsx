@@ -177,7 +177,7 @@ export default function App() {
   if (!isLoaded) {
     return (
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh", fontFamily: "sans-serif", color: "#666" }}>
-        Loading project data...
+        Loading...
       </div>
     );
   }
