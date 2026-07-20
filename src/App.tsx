@@ -133,7 +133,9 @@ export default function App() {
       .subscribe();
 
     return () => {
-      void supabase.removeChannel(clientChannel);
+      if (supabase) {
+        void supabase.removeChannel(clientChannel);
+      }
     };
   }, [loadClients]);
 
