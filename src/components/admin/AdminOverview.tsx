@@ -1,5 +1,4 @@
 import { AlertTriangle, CheckCircle, Clock, DollarSign, Users } from "lucide-react";
-import { StatusBadge } from "../shared/StatusBadge";
 import { TODAY } from "../../data";
 import { daysDiff, formatCurrency } from "../../utils";
 import type { Client, AdminTab } from "../../types";
@@ -99,47 +98,6 @@ export function AdminOverview({
             </div>
           </div>
         )}
-      </div>
-
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
-          <h2 className="font-semibold text-sm">All Clients</h2>
-          <button onClick={() => setTab("clients")} className="text-xs text-primary hover:underline font-medium">
-            Manage →
-          </button>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border/60">
-                {['Name', 'Address', 'Plan', 'Due Date', 'Status'].map((h) => (
-                  <th key={h} className={`text-left text-xs text-muted-foreground font-medium px-4 py-2.5 ${h === 'Address' ? 'hidden md:table-cell' : ''}`}>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {clients.map((c) => {
-                const days = daysDiff(c.dueDate);
-                return (
-                  <tr key={c.id} className="border-b border-border/40 last:border-0 hover:bg-accent/40 transition-colors">
-                    <td className="px-4 py-3 font-medium">{c.name}</td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground hidden md:table-cell max-w-[180px] truncate">{c.address}</td>
-                    <td className="px-4 py-3 font-mono font-semibold">{formatCurrency(c.plan)}</td>
-                    <td className="px-4 py-3 font-mono text-xs">
-                      <span className={days > 0 ? "text-destructive font-semibold" : ""}>{c.dueDate}</span>
-                      {days > 0 && <span className="ml-2 bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-xs font-semibold">+{days}d</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={c.status} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
       </div>
     </div>
   );
