@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { AlertTriangle, Eye, EyeOff, User } from "lucide-react";
 import { TopBar } from "../shared/TopBar";
+import { supabase } from "../../lib/supabase"; // Adjust import path if needed
 import type { Client } from "../../types";
 
 export function ClientLogin({
-  clients,
   onLogin,
   onSignup,
   onBack,
@@ -24,17 +24,26 @@ export function ClientLogin({
     e.preventDefault();
     setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
-    const match = clients.find(
-      (c) => c.name.toLowerCase() === name.trim().toLowerCase() && c.password === password
-    );
 
-    if (match) {
-      onLogin(match);
-    } else {
-      setError("Invalid client name or password. Please try again.");
+    try {
+      const { data, error: rpcError } = await supabase.rpc("verify_client_login", {
+        p_name: name,
+        p_password: password,
+      });
+
+      if (rpcError) throw rpcError;
+
+      if (data && data.length > 0) {
+        onLogin(data[0] as Client);
+      } else {
+        setError("Invalid client name or password. Please try again.");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("An unexpected error occurred during login.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -104,7 +113,6 @@ export function ClientLogin({
           </form>
 
           <p className="text-sm text-muted-foreground text-center mt-6">
-            {" "}
             <button onClick={onSignup} className="text-primary font-semibold hover:underline">
               Forgot your password?
             </button>

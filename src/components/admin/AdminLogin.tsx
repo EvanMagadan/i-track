@@ -14,7 +14,9 @@ export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: (
     e.preventDefault();
     setError("");
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 600));
+
+    await new Promise((r) => setTimeout(r, 400));
+
     if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
       onLogin();
     } else {
