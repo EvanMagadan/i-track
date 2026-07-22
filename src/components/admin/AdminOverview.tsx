@@ -1,4 +1,5 @@
-import { AlertTriangle, CheckCircle, Clock, DollarSign, Users } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, CheckCircle, Clock, DollarSign, Users, Eye, EyeOff } from "lucide-react";
 import { TODAY } from "../../data";
 import { daysDiff, formatCurrency } from "../../utils";
 import type { Client, AdminTab } from "../../types";
@@ -14,11 +15,22 @@ export function AdminOverview({
   cutoff: Client[];
   setTab: (t: AdminTab, alertTab?: "overdue" | "cutoff") => void;
 }) {
+  const [showRevenue, setShowRevenue] = useState(false);
+
   const active = clients.filter((c) => c.status === "active");
   const monthlyRevenue = active.reduce((sum, c) => sum + c.plan, 0);
-  const sortByRecentOverdue = (a: Client, b: Client) => daysDiff(a.dueDate) - daysDiff(b.dueDate) || a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
+  const sortByRecentOverdue = (a: Client, b: Client) =>
+    daysDiff(a.dueDate) - daysDiff(b.dueDate) ||
+    a.dueDate.localeCompare(b.dueDate) ||
+    a.name.localeCompare(b.name);
   const recentCutoff = [...cutoff].sort(sortByRecentOverdue).slice(0, 3);
   const recentOverdue = [...overdue].sort(sortByRecentOverdue).slice(0, 3);
+
+  const standardStats = [
+    { label: "Total Clients", value: clients.length, icon: <Users className="w-5 h-5" />, color: "text-blue-600", bg: "bg-blue-50" },
+    { label: "Active", value: active.length, icon: <CheckCircle className="w-5 h-5" />, color: "text-green-600", bg: "bg-green-50" },
+    { label: "Overdue", value: overdue.length, icon: <AlertTriangle className="w-5 h-5" />, color: "text-red-600", bg: "bg-red-50" },
+  ];
 
   return (
     <div>
@@ -30,18 +42,43 @@ export function AdminOverview({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        {[
-          { label: "Total Clients", value: clients.length, icon: <Users className="w-5 h-5" />, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Active", value: active.length, icon: <CheckCircle className="w-5 h-5" />, color: "text-green-600", bg: "bg-green-50" },
-          { label: "Overdue", value: overdue.length, icon: <AlertTriangle className="w-5 h-5" />, color: "text-red-600", bg: "bg-red-50" },
-          { label: "Monthly Revenue", value: formatCurrency(monthlyRevenue), icon: <DollarSign className="w-5 h-5" />, color: "text-primary", bg: "bg-primary/10" },
-        ].map((s) => (
+        {standardStats.map((s) => (
           <div key={s.label} className="bg-card border border-border rounded-xl p-4 sm:p-5">
             <div className={`w-9 h-9 rounded-lg ${s.bg} ${s.color} flex items-center justify-center mb-3`}>{s.icon}</div>
             <p className="text-xl sm:text-2xl font-bold font-mono leading-none break-words">{s.value}</p>
             <p className="text-xs text-muted-foreground mt-1">{s.label}</p>
           </div>
         ))}
+
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 relative flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                <DollarSign className="w-5 h-5" />
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => setShowRevenue((prev) => !prev)}
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-colors"
+                title={showRevenue ? "Hide Revenue" : "Show Revenue"}
+              >
+                {showRevenue ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+
+            <p className="text-xl sm:text-2xl font-bold font-mono leading-none break-words">
+              {showRevenue ? (
+                formatCurrency(monthlyRevenue)
+              ) : (
+                <span className="select-none tracking-widest text-muted-foreground">
+                  ₱••••••
+                </span>
+              )}
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">Monthly Revenue</p>
+        </div>
       </div>
 
       <div className="space-y-3 sm:space-y-4 mb-6">
