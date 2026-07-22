@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, Eye, EyeOff, User } from "lucide-react";
 import { TopBar } from "../shared/TopBar";
-import { supabase } from "../../lib/supabase"; // Adjust import path if needed
+import { supabase } from "../../lib/supabase";
 import type { Client } from "../../types";
 
 export function ClientLogin({
@@ -26,6 +26,10 @@ export function ClientLogin({
     setLoading(true);
 
     try {
+      if (!supabase) {
+        throw new Error("Supabase client is not initialized.");
+      }
+
       const { data, error: rpcError } = await supabase.rpc("verify_client_login", {
         p_name: name,
         p_password: password,
