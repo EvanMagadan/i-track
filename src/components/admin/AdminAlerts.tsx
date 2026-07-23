@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle, CreditCard } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { daysDiff, formatCurrency } from "../../utils";
