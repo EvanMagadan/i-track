@@ -132,14 +132,11 @@ export function AdminClients({
   const handleDelete = async (id: string) => {
     try {
       setDeleteError(null);
-      console.log(`Starting delete for client ${id}...`);
       await deleteClient(id);
-      console.log(`Delete successful, updating UI...`);
       setClients((prev) => prev.filter((c) => c.id !== id));
       setDeleteConfirm(null);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to delete client";
-      console.error("Delete failed:", error);
       setDeleteError(message);
     }
   };
@@ -247,7 +244,7 @@ export function AdminClients({
               {filtered.map((c) => {
                 const days = daysDiff(c.dueDate);
                 return (
-                    <tr key={c.id} className="border-b border-border/40 last:border-0 hover:bg-accent/40 transition-colors">
+                  <tr key={c.id} className="border-b border-border/40 last:border-0 hover:bg-accent/40 transition-colors">
                     <td className="px-3 sm:px-4 py-3.5 font-mono text-xs text-muted-foreground">{c.id}</td>
                     <td className="px-3 sm:px-4 py-3.5 font-medium">{c.name}</td>
                     <td className="px-3 sm:px-4 py-3.5 text-xs text-muted-foreground hidden lg:table-cell max-w-[160px] truncate">{c.address}</td>
@@ -258,17 +255,33 @@ export function AdminClients({
                     </td>
                     <td className="px-3 sm:px-4 py-3.5"><StatusBadge status={c.status} /></td>
                     <td className="px-3 sm:px-4 py-3.5">
-                      <div className="flex items-center flex-wrap gap-2">
-                        <button onClick={() => onOpenPayment(c)} className="p-1.5 rounded-md hover:bg-green-100 transition-colors text-muted-foreground hover:text-green-700" title="Record payment">
+                      <div className="flex items-center gap-1.5">
+                        <button 
+                          onClick={() => onOpenPayment(c)} 
+                          className="p-1.5 rounded-md hover:bg-green-100 transition-colors text-muted-foreground hover:text-green-700" 
+                          title="Record payment"
+                        >
                           <CreditCard className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => openEdit(c)} className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground" title="Edit client">
+                        <button 
+                          onClick={() => openEdit(c)} 
+                          className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground" 
+                          title="Edit client"
+                        >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => setHistoryTarget(c)} className="p-1.5 rounded-md hover:bg-blue-100 transition-colors text-muted-foreground hover:text-blue-700" title="Show payment history">
+                        <button 
+                          onClick={() => setHistoryTarget(c)} 
+                          className="p-1.5 rounded-md hover:bg-blue-100 transition-colors text-muted-foreground hover:text-blue-700" 
+                          title="Show payment history"
+                        >
                           <History className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => setDeleteConfirm(c.id)} className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive" title="Delete client">
+                        <button 
+                          onClick={() => setDeleteConfirm(c.id)} 
+                          className="p-1.5 rounded-md hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive" 
+                          title="Delete client"
+                        >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -384,14 +397,14 @@ export function AdminClients({
                       </div>
                       <button
                         onClick={() => setEditingPayment(payment)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-blue-100 transition-all text-muted-foreground hover:text-blue-700"
+                        className="sm:opacity-0 sm:group-hover:opacity-100 p-1.5 rounded-md hover:bg-blue-100 transition-all text-muted-foreground hover:text-blue-700"
                         title="Edit payment"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => setDeletePaymentId(payment.id)}
-                        className="opacity-0 group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-100 transition-all text-muted-foreground hover:text-red-700"
+                        className="sm:opacity-0 sm:group-hover:opacity-100 p-1.5 rounded-md hover:bg-red-100 transition-all text-muted-foreground hover:text-red-700"
                         title="Delete payment"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
