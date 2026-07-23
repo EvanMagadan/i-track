@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle, Clock, DollarSign, Users, Eye, EyeOff } from "lucide-react";
+import { AlertTriangle, CheckCircle, DollarSign, Users, Eye, EyeOff } from "lucide-react";
 import { TODAY } from "../../data";
 import { daysDiff, formatCurrency } from "../../utils";
 import type { Client, AdminTab } from "../../types";
@@ -7,13 +7,11 @@ import type { Client, AdminTab } from "../../types";
 export function AdminOverview({
   clients,
   overdue,
-  cutoff,
   setTab,
 }: {
   clients: Client[];
   overdue: Client[];
-  cutoff: Client[];
-  setTab: (t: AdminTab, alertTab?: "overdue" | "cutoff") => void;
+  setTab: (t: AdminTab, alertTab?: "overdue") => void;
 }) {
   const [showRevenue, setShowRevenue] = useState(false);
 
@@ -23,7 +21,6 @@ export function AdminOverview({
     daysDiff(a.dueDate) - daysDiff(b.dueDate) ||
     a.dueDate.localeCompare(b.dueDate) ||
     a.name.localeCompare(b.name);
-  const recentCutoff = [...cutoff].sort(sortByRecentOverdue).slice(0, 3);
   const recentOverdue = [...overdue].sort(sortByRecentOverdue).slice(0, 3);
 
   const standardStats = [
@@ -82,34 +79,6 @@ export function AdminOverview({
       </div>
 
       <div className="space-y-3 sm:space-y-4 mb-6">
-        {cutoff.length > 0 && (
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 sm:p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-600" />
-                <h3 className="font-semibold text-amber-800 text-sm">Overdue 3+ Days ({cutoff.length})</h3>
-              </div>
-              <button onClick={() => setTab("alerts", "cutoff")} className="text-xs text-amber-700 hover:underline font-medium">
-                View alerts
-              </button>
-            </div>
-            <div className="space-y-1.5 sm:space-y-2">
-              {recentCutoff.map((c) => {
-                const days = daysDiff(c.dueDate);
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setTab("alerts", "cutoff")}
-                    className="w-full flex items-center justify-between gap-3 text-sm rounded-lg px-3 py-2 text-left hover:bg-amber-100/70 transition-colors"
-                  >
-                    <span className="min-w-0 flex-1 font-medium text-amber-900 truncate">{c.name}</span>
-                    <span className="font-mono text-amber-700 font-semibold shrink-0 whitespace-nowrap">{formatCurrency(c.plan)} · {days}d late</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
         {overdue.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
