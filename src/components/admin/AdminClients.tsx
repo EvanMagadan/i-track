@@ -35,7 +35,7 @@ export function AdminClients({
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [deletePaymentId, setDeletePaymentId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<"name" | "dueDateAsc" | "dueDateDesc" | "status">("name");
+  const [sortBy, setSortBy] = useState<"name" | "dueDate" | "status" | "plan">("name");
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
@@ -50,9 +50,10 @@ export function AdminClients({
 
     return [...visible].sort((a, b) => {
       if (sortBy === "name") return a.name.localeCompare(b.name);
-      if (sortBy === "dueDateAsc") return a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
-      if (sortBy === "dueDateDesc") return b.dueDate.localeCompare(a.dueDate) || a.name.localeCompare(b.name);
-      return a.status.localeCompare(b.status) || a.name.localeCompare(b.name);
+      if (sortBy === "dueDate") return a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
+      if (sortBy === "status") return a.status.localeCompare(b.status) || a.name.localeCompare(b.name);
+      if (sortBy === "plan") return b.plan - a.plan || a.name.localeCompare(b.name);
+      return 0;
     });
   }, [clients, search, sortBy]);
 
@@ -223,9 +224,9 @@ export function AdminClients({
               className="w-full sm:w-auto px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="name">Alphabetical A-Z</option>
-              <option value="dueDateAsc">Due date, soonest first</option>
-              <option value="dueDateDesc">Due date, latest first</option>
+              <option value="dueDate">Due Date</option>
               <option value="status">Status</option>
+              <option value="plan">Plan</option>
             </select>
           </div>
         </div>
