@@ -11,9 +11,7 @@ export function AdminAlerts({
   overdue: Client[];
   onRecordPayment: (c: Client) => void;
 }) {
-  const [sortBy, setSortBy] = useState<
-    "daysAsc" | "daysDesc" | "dueDateAsc" | "dueDateDesc" | "monthAsc"
-  >("daysAsc");
+  const [sortBy, setSortBy] = useState<"daysAsc" | "daysDesc">("daysAsc");
 
   const sortedList = useMemo(() => {
     const next = [...overdue];
@@ -21,33 +19,18 @@ export function AdminAlerts({
       const aDays = daysDiff(a.dueDate);
       const bDays = daysDiff(b.dueDate);
 
-      if (sortBy === "daysAsc")
+      if (sortBy === "daysAsc") {
         return (
           aDays - bDays ||
           a.dueDate.localeCompare(b.dueDate) ||
           a.name.localeCompare(b.name)
         );
-      if (sortBy === "daysDesc")
-        return (
-          bDays - aDays ||
-          a.dueDate.localeCompare(b.dueDate) ||
-          a.name.localeCompare(b.name)
-        );
-      if (sortBy === "dueDateDesc")
-        return (
-          b.dueDate.localeCompare(a.dueDate) || a.name.localeCompare(b.name)
-        );
-      if (sortBy === "monthAsc") {
-        const aMonth = a.dueDate.slice(0, 7);
-        const bMonth = b.dueDate.slice(0, 7);
-        return (
-          aMonth.localeCompare(bMonth) ||
-          a.dueDate.localeCompare(b.dueDate) ||
-          a.name.localeCompare(b.name)
-        );
       }
+      
       return (
-        a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name)
+        bDays - aDays ||
+        a.dueDate.localeCompare(b.dueDate) ||
+        a.name.localeCompare(b.name)
       );
     });
   }, [overdue, sortBy]);
@@ -73,7 +56,7 @@ export function AdminAlerts({
 
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
         <p className="text-xs text-muted-foreground max-w-xl">
-          Sort the current alert list by days overdue, due date, or month.
+          Sort the current alert list by days overdue.
         </p>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
           <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
@@ -86,9 +69,6 @@ export function AdminAlerts({
           >
             <option value="daysAsc">Smallest days first</option>
             <option value="daysDesc">Largest days first</option>
-            <option value="dueDateAsc">Due date, soonest first</option>
-            <option value="dueDateDesc">Due date, latest first</option>
-            <option value="monthAsc">Month</option>
           </select>
         </div>
       </div>
