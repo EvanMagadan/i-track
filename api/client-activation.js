@@ -63,7 +63,15 @@ export default async function handler(req, res) {
       user_metadata: { client_id: data.client_id },
     });
     if (createError && !createError.message.toLowerCase().includes("already been registered")) return res.status(400).json({ message: createError.message });
-    if (created.user) await db.from("client_activation_tokens").update({ used_at: new Date().toISOString() }).eq("client_id", data.client_id);
+    const authUserId = created.user?.id;
+    if (!authUserId) {
+      const { data: existing } = await db.from("clients").select("auth_user_id").eq("id", data.client_id).single();
+      if (!existing?.auth_user_id) return res.status(409).json({ message: "This account already exists but is not linked yet. Please contact your provider." });
+    } else {
+      const { error: linkError } = await db.from("clients").update({ auth_user_id: authUserId }).eq("id", data.client_id).is("auth_user_id", null);
+      if (linkError) return res.status(500).json({ message: "Account created, but your client profile could not be linked. Please try again." });
+    }
+    await db.from("client_activation_tokens").update({ used_at: new Date().toISOString() }).eq("client_id", data.client_id);
     return res.status(200).json({ login });
   }
   return res.status(400).json({ message: "Unknown action" });
