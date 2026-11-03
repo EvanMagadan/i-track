@@ -140,12 +140,8 @@ export function AdminClients({
     }
 
     if (modal === "add") {
-      const maxNum = clients.reduce((max, c) => {
-        const n = parseInt(c.id.replace("CLI-", ""), 10);
-        return isNaN(n) ? max : Math.max(max, n);
-      }, 0);
       const newClient: Client = {
-        id: `CLI-${String(maxNum + 1).padStart(3, "0")}`,
+        id: `CLI-${crypto.randomUUID().replaceAll("-", "").slice(0, 10).toUpperCase()}`,
         email: form.email.trim(),
         name: form.name.trim(),
         address: form.address.trim(),

@@ -106,6 +106,16 @@ export default async function handler(req, res) {
         if (payload.some((client) => !allowed.has(client.id))) return res.status(403).json({ success: false, message: "You can only update clients assigned to you." });
       }
 
+      if (admin.organizationId) {
+        const { data: existingClients, error: existingError } = await supabase
+          .from("clients")
+          .select("id,organization_id")
+          .in("id", payload.map((client) => client.id));
+        if (existingError) return res.status(500).json({ success: false, message: existingError.message });
+        const belongsToAnotherOrganization = (existingClients ?? []).some((client) => client.organization_id && client.organization_id !== admin.organizationId);
+        if (belongsToAnotherOrganization) return res.status(409).json({ success: false, message: "A client ID already belongs to another provider. Please use a different ID." });
+      }
+
       const { data, error } = await supabase.from("clients").upsert(payload).select();
 
       if (error) {
