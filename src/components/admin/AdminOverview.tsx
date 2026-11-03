@@ -24,9 +24,9 @@ export function AdminOverview({
   const recentOverdue = [...overdue].sort(sortByRecentOverdue).slice(0, 3);
 
   const standardStats = [
-    { label: "Total Clients", value: clients.length, icon: <Users className="w-5 h-5" />, color: "text-blue-600", bg: "bg-blue-50" },
-    { label: "Active", value: active.length, icon: <CheckCircle className="w-5 h-5" />, color: "text-green-600", bg: "bg-green-50" },
-    { label: "Overdue", value: overdue.length, icon: <AlertTriangle className="w-5 h-5" />, color: "text-red-600", bg: "bg-red-50" },
+    { label: "Total Clients", value: clients.length, icon: <Users className="w-5 h-5" />, color: "text-blue-600 dark:text-blue-300", bg: "bg-blue-50 dark:bg-blue-950/50" },
+    { label: "Active", value: active.length, icon: <CheckCircle className="w-5 h-5" />, color: "text-green-600 dark:text-green-300", bg: "bg-green-50 dark:bg-green-950/50" },
+    { label: "Overdue", value: overdue.length, icon: <AlertTriangle className="w-5 h-5" />, color: "text-red-600 dark:text-red-300", bg: "bg-red-50 dark:bg-red-950/50" },
   ];
 
   return (
@@ -85,11 +85,11 @@ export function AdminOverview({
 
       <div className="space-y-3 sm:space-y-4 mb-6">
         {overdue.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-3 sm:p-4">
+          <div className="bg-red-50 border border-red-200 dark:bg-red-950/40 dark:border-red-900 rounded-xl p-3 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4 text-red-600" />
-                <h3 className="font-semibold text-red-800 text-sm">Overdue Accounts ({overdue.length})</h3>
+                <h3 className="font-semibold text-red-800 dark:text-red-200 text-sm">Overdue Accounts ({overdue.length})</h3>
               </div>
               <button onClick={() => setTab("alerts", "overdue")} className="text-xs text-red-600 hover:underline font-medium">
                 View all
@@ -102,8 +102,8 @@ export function AdminOverview({
                   onClick={() => setTab("alerts", "overdue")}
                   className="w-full flex items-center justify-between gap-3 text-sm rounded-lg px-3 py-2 text-left hover:bg-red-100/70 transition-colors"
                 >
-                  <span className="min-w-0 flex-1 font-medium text-red-900 truncate">{c.name}</span>
-                  <span className="font-mono text-red-700 font-semibold bg-red-100 px-2 py-0.5 rounded shrink-0 whitespace-nowrap">{daysDiff(c.dueDate)}d past due</span>
+                  <span className="min-w-0 flex-1 font-medium text-red-900 dark:text-red-100 truncate">{c.name}</span>
+                  <span className="font-mono text-red-700 dark:text-red-200 font-semibold bg-red-100 dark:bg-red-950/70 px-2 py-0.5 rounded shrink-0 whitespace-nowrap">{daysDiff(c.dueDate)}d past due</span>
                 </button>
               ))}
             </div>

@@ -140,11 +140,11 @@ export function ClientSignup({
             </form>
           ) : (
             <form onSubmit={handleSetPassword} className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-3 flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+              <div className="bg-green-50 border border-green-200 dark:bg-green-950/40 dark:border-green-900 rounded-lg px-3 py-3 flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-300 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-green-800">Identity Verified</p>
-                  <p className="text-xs text-green-700 mt-0.5">
+                  <p className="text-sm font-semibold text-green-800 dark:text-green-200">Identity Verified</p>
+                  <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
                     Welcome, {foundClient?.name}. Create your secure account password below.
                   </p>
                 </div>

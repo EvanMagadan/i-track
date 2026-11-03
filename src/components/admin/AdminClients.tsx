@@ -260,7 +260,7 @@ export function AdminClients({
                     <td className="px-3 sm:px-4 py-3.5 font-mono font-semibold">{formatCurrency(c.plan)}</td>
                     <td className="px-3 sm:px-4 py-3.5 font-mono text-xs whitespace-nowrap">
                       <span className={days > 0 ? "text-destructive font-semibold" : ""}>{c.dueDate}</span>
-                      {days > 0 && <span className="ml-1.5 inline-flex bg-red-100 text-red-700 text-xs px-1.5 py-0.5 rounded font-semibold">{days}d late</span>}
+                      {days > 0 && <span className="ml-1.5 inline-flex bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-200 text-xs px-1.5 py-0.5 rounded font-semibold">{days}d late</span>}
                     </td>
                     <td className="px-3 sm:px-4 py-3.5"><StatusBadge status={c.status} /></td>
                     <td className="px-3 sm:px-4 py-3.5">
@@ -366,10 +366,10 @@ export function AdminClients({
                 </div>
               )}
               {modal === "edit" && editTarget && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-3 text-sm text-blue-900">
+                <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100 px-3 py-3 text-sm text-blue-900">
                   <div className="flex items-center justify-between gap-3"><span className="font-medium">Client activation</span><button type="button" onClick={() => void issueActivationCode()} className="font-semibold hover:underline">Generate code</button></div>
                   {activationCode && <p className="mt-2 font-mono text-lg tracking-[0.3em]">{activationCode}</p>}
-                  <p className="text-xs text-blue-700 mt-1">Code expires in 24 hours and can be used once.</p>
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">Code expires in 24 hours and can be used once.</p>
                 </div>
               )}
             </div>

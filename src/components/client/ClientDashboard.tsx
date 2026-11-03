@@ -49,23 +49,23 @@ export function ClientDashboard({ client, onLogout }: { client: Client; onLogout
           {showWarning && (
             <div
               className={`rounded-xl px-4 py-3.5 flex items-start gap-3 mb-6 border ${
-                isOverdue ? "bg-red-50 border-red-200" : isDueToday ? "bg-amber-50 border-amber-200" : "bg-blue-50 border-blue-200"
+                isOverdue ? "bg-red-50 border-red-200 dark:bg-red-950/40 dark:border-red-900" : isDueToday ? "bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900" : "bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900"
               }`}
             >
               <AlertTriangle
                 className={`w-5 h-5 mt-0.5 shrink-0 ${
-                  isOverdue ? "text-red-600" : isDueToday ? "text-amber-600" : "text-blue-600"
+                  isOverdue ? "text-red-600 dark:text-red-300" : isDueToday ? "text-amber-600 dark:text-amber-300" : "text-blue-600 dark:text-blue-300"
                 }`}
               />
               <div>
-                <p className={`text-sm font-semibold ${isOverdue ? "text-red-800" : isDueToday ? "text-amber-800" : "text-blue-800"}`}>
+                <p className={`text-sm font-semibold ${isOverdue ? "text-red-800 dark:text-red-200" : isDueToday ? "text-amber-800 dark:text-amber-200" : "text-blue-800 dark:text-blue-200"}`}>
                   {isOverdue
                     ? `Account Overdue — ${overdueDays} Day${overdueDays !== 1 ? "s" : ""} Past Due`
                     : isDueToday
                     ? "Payment Due Today"
                     : "Payment Due Tomorrow"}
                 </p>
-                <p className={`text-xs mt-0.5 ${isOverdue ? "text-red-700" : isDueToday ? "text-amber-700" : "text-blue-700"}`}>
+                <p className={`text-xs mt-0.5 ${isOverdue ? "text-red-700 dark:text-red-300" : isDueToday ? "text-amber-700 dark:text-amber-300" : "text-blue-700 dark:text-blue-300"}`}>
                   {isOverdue
                     ? `Your payment was due on ${formatDate(client.dueDate)}. Please settle to avoid service interruption.`
                     : isDueToday
