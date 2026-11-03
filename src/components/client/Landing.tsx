@@ -1,11 +1,12 @@
 import { Activity, ChevronRight, CircleCheck, Settings, User, Wifi } from "lucide-react";
+import { ThemeToggle } from "../shared/ThemeToggle";
 
 export function Landing({ onClientPortal, onAdminPanel }: { onClientPortal: () => void; onAdminPanel: () => void }) {
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-hidden">
       <header className="border-b border-border bg-card/90 backdrop-blur px-6 py-4 flex items-center justify-between relative z-10">
         <div className="flex items-center gap-2"><Wifi className="w-5 h-5 text-primary" /><span className="font-bold tracking-tight">I-Track</span></div>
-        <span className="hidden sm:block text-xs text-muted-foreground">Service account portal</span>
+        <div className="flex items-center gap-3"><span className="hidden sm:block text-xs text-muted-foreground">Service account portal</span><ThemeToggle /></div>
       </header>
       <main className="relative flex-1 grid lg:grid-cols-[1.05fr_0.95fr] items-center gap-12 px-6 sm:px-10 lg:px-20 py-12 lg:py-20 max-w-7xl w-full mx-auto">
         <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />

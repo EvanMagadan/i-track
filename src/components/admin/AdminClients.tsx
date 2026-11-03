@@ -260,7 +260,7 @@ export function AdminClients({
                     <td className="px-3 sm:px-4 py-3.5 font-mono font-semibold">{formatCurrency(c.plan)}</td>
                     <td className="px-3 sm:px-4 py-3.5 font-mono text-xs whitespace-nowrap">
                       <span className={days > 0 ? "text-destructive font-semibold" : ""}>{c.dueDate}</span>
-                      {days > 0 && <span className="ml-1.5 inline-flex bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-200 text-xs px-1.5 py-0.5 rounded font-semibold">{days}d late</span>}
+                      {days > 0 && <span className="ml-1.5 inline-flex bg-red-100 text-red-700 dark:bg-[#492930] dark:text-[#e7a0aa] text-xs px-1.5 py-0.5 rounded font-semibold">{days}d late</span>}
                     </td>
                     <td className="px-3 sm:px-4 py-3.5"><StatusBadge status={c.status} /></td>
                     <td className="px-3 sm:px-4 py-3.5">
