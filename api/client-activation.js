@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     return res.status(200).json({ code, expiresInHours: 24 });
   }
 
-  if (action === "consume") {
+  if (action === "consume" || action === "reset") {
     if (typeof clientId !== "string" || typeof activationCode !== "string") return res.status(400).json({ message: "Client ID and activation code are required" });
     if (typeof password !== "string" || password.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
     const id = clientId.trim();
@@ -56,6 +56,14 @@ export default async function handler(req, res) {
     if (error || !data || data.used_at || new Date(data.expires_at) <= new Date() || hash(activationCode.trim()) !== data.token_hash) return res.status(400).json({ message: "Invalid or expired activation code" });
     const { data: client } = await db.from("clients").select("id,auth_login").eq("id", data.client_id).single();
     const login = client?.auth_login ?? data.client_id.toLowerCase();
+    if (action === "reset") {
+      const { data: linkedClient } = await db.from("clients").select("auth_user_id").eq("id", data.client_id).single();
+      if (!linkedClient?.auth_user_id) return res.status(409).json({ message: "This client account has not been activated yet." });
+      const { error: resetError } = await db.auth.admin.updateUserById(linkedClient.auth_user_id, { password });
+      if (resetError) return res.status(400).json({ message: resetError.message });
+      await db.from("client_activation_tokens").update({ used_at: new Date().toISOString() }).eq("client_id", data.client_id);
+      return res.status(200).json({ login });
+    }
     const { data: created, error: createError } = await db.auth.admin.createUser({
       email: `${login}@clients.i-track.local`,
       password,

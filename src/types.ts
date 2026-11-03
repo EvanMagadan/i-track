@@ -2,6 +2,7 @@ export type View =
   | "landing"
   | "client-login"
   | "client-signup"
+  | "client-reset"
   | "client-dashboard"
   | "admin-login"
   | "provider-signup"

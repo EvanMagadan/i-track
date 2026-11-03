@@ -3,6 +3,7 @@ import { Landing } from "./components/client/Landing";
 import { ClientLogin } from "./components/client/ClientLogin";
 import { ClientSignup } from "./components/client/ClientSignup";
 import { ClientDashboard } from "./components/client/ClientDashboard";
+import { ClientPasswordReset } from "./components/client/ClientPasswordReset";
 import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminPanel } from "./components/admin/AdminPanel";
 import { ProviderSignup } from "./components/admin/ProviderSignup";
@@ -203,6 +204,7 @@ export default function App() {
       <ClientLogin
         onLogin={handleClientLogin}
         onSignup={() => setView("client-signup")}
+        onReset={() => setView("client-reset")}
         onBack={() => setView("landing")}
       />
     );
@@ -212,11 +214,14 @@ export default function App() {
     return <ClientSignup onActivated={handleClientActivation} onBack={() => setView("client-login")} />;
   }
 
+  if (view === "client-reset") return <ClientPasswordReset onBack={() => setView("client-login")} />;
+
   if (view === "client-dashboard" && !loggedInClient) {
     return (
       <ClientLogin
         onLogin={handleClientLogin}
         onSignup={() => setView("client-signup")}
+        onReset={() => setView("client-reset")}
         onBack={() => setView("landing")}
       />
     );

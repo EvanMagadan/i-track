@@ -8,10 +8,12 @@ export function ClientLogin({
   onLogin,
   onSignup,
   onBack,
+  onReset,
 }: {
   onLogin: (c: Client) => void;
   onSignup: () => void;
   onBack: () => void;
+  onReset: () => void;
 }) {
   const [clientId, setClientId] = useState("");
   const [password, setPassword] = useState("");
@@ -125,6 +127,8 @@ export function ClientLogin({
               {loading ? "Signing in…" : "Sign In"}
             </button>
           </form>
+
+          <button onClick={onReset} className="w-full mt-4 text-sm text-primary font-semibold hover:underline">Forgot password?</button>
 
           <p className="text-sm text-muted-foreground text-center mt-6">
             <button onClick={onSignup} className="text-primary font-semibold hover:underline">
