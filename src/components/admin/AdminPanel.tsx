@@ -5,6 +5,7 @@ import { AdminClients } from "./AdminClients";
 import { AdminCalendar } from "./AdminCalendar";
 import { AdminAlerts } from "./AdminAlerts";
 import { RecordPaymentModal } from "./RecordPaymentModal";
+import { ThemeToggle } from "../shared/ThemeToggle";
 import { advanceDueDate, daysDiff } from "../../utils";
 import type { AdminTab, Client, Payment } from "../../types";
 
@@ -57,6 +58,7 @@ export function AdminPanel({
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <header className="shrink-0 border-b border-border bg-card px-4 sm:px-6 py-3.5 flex items-center justify-between z-20">
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded-md hover:bg-accent transition-colors lg:hidden">
             <Menu className="w-4 h-4" />
           </button>
