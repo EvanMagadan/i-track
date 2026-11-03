@@ -4,6 +4,7 @@ export type View =
   | "client-signup"
   | "client-dashboard"
   | "admin-login"
+  | "provider-signup"
   | "admin";
 
 export type AdminTab = "overview" | "clients" | "calendar" | "alerts";

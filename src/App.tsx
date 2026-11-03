@@ -5,6 +5,7 @@ import { ClientSignup } from "./components/client/ClientSignup";
 import { ClientDashboard } from "./components/client/ClientDashboard";
 import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminPanel } from "./components/admin/AdminPanel";
+import { ProviderSignup } from "./components/admin/ProviderSignup";
 import { INITIAL_CLIENTS } from "./data";
 import { supabase } from "./lib/supabase";
 import { daysDiff } from "./utils";
@@ -101,7 +102,8 @@ export default function App() {
     void client.auth.getSession().then(async ({ data }) => {
       if (!active || !data.session) return;
       const { data: isAdmin } = await client.rpc("is_app_admin");
-      if (active && isAdmin === true) setView("admin");
+      const { data: organizationId } = await client.rpc("current_organization_id");
+      if (active && (isAdmin === true || organizationId)) setView("admin");
     });
     return () => { active = false; };
   }, []);
@@ -226,9 +228,14 @@ export default function App() {
         onLogin={() => {
           setView("admin");
         }}
+        onSignup={() => setView("provider-signup")}
         onBack={() => setView("landing")}
       />
     );
+  }
+
+  if (view === "provider-signup") {
+    return <ProviderSignup onCreated={() => setView("admin")} onBack={() => setView("admin-login")} />;
   }
 
   if (view === "admin") {

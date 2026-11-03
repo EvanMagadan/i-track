@@ -3,7 +3,7 @@ import { AlertTriangle, Eye, EyeOff, Settings } from "lucide-react";
 import { TopBar } from "../shared/TopBar";
 import { supabase } from "../../lib/supabase";
 
-export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: () => void }) {
+export function AdminLogin({ onLogin, onSignup, onBack }: { onLogin: () => void; onSignup: () => void; onBack: () => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
@@ -93,6 +93,7 @@ export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: (
             >
               {loading ? "Authenticating…" : "Access Admin Panel"}
             </button>
+            <button type="button" onClick={onSignup} className="w-full text-sm text-primary font-semibold hover:underline">Create a provider account</button>
           </form>
         </div>
       </main>

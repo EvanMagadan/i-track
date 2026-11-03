@@ -34,9 +34,12 @@ async function requireAdmin(req) {
   const { data: userData, error: userError } = await authClient.auth.getUser();
   if (userError || !userData.user) return null;
   const { data, error } = await authClient.rpc("is_app_admin");
+  const orgResult = await authClient.rpc("current_organization_id");
+  const roleResult = await authClient.rpc("current_organization_role");
+  if (!orgResult.error && orgResult.data) return { userId: userData.user.id, organizationId: orgResult.data, role: roleResult.error ? "owner" : roleResult.data ?? "owner" };
   if (error || data !== true) return null;
-  const roleResult = await authClient.rpc("current_admin_role");
-  return { userId: userData.user.id, role: roleResult.error ? "owner" : roleResult.data ?? "owner" };
+  const legacyRoleResult = await authClient.rpc("current_admin_role");
+  return { userId: userData.user.id, role: legacyRoleResult.error ? "owner" : legacyRoleResult.data ?? "owner" };
 }
 
 export default async function handler(req, res) {
@@ -55,7 +58,8 @@ export default async function handler(req, res) {
   if (supabase) {
     if (req.method === "GET") {
       let query = supabase.from("clients").select("*").order("created_at", { ascending: false });
-      if (admin.role !== "owner") {
+      if (admin.organizationId) query = query.eq("organization_id", admin.organizationId);
+      else if (admin.role !== "owner") {
         const { data: assignments, error: assignmentError } = await supabase.from("admin_client_assignments").select("client_id").eq("admin_user_id", admin.userId);
         if (assignmentError) return res.status(500).json({ success: false, message: assignmentError.message });
         const assignedIds = (assignments ?? []).map((assignment) => assignment.client_id);
@@ -89,13 +93,14 @@ export default async function handler(req, res) {
         due_date: typeof client.dueDate === "string" ? client.dueDate : "",
         status: ["active", "overdue", "disconnected", "pending"].includes(client.status) ? client.status : "pending",
         payments: Array.isArray(client.payments) ? client.payments : [],
+        organization_id: admin.organizationId,
       }));
 
       if (payload.some((client) => !client.id || !client.name || !client.due_date || !client.install_date)) {
         return res.status(400).json({ success: false, message: "Each client needs an id, name, install date, and due date" });
       }
 
-      if (admin.role !== "owner") {
+      if (!admin.organizationId && admin.role !== "owner") {
         const { data: assignments } = await supabase.from("admin_client_assignments").select("client_id").eq("admin_user_id", admin.userId).in("client_id", payload.map((client) => client.id));
         const allowed = new Set((assignments ?? []).map((assignment) => assignment.client_id));
         if (payload.some((client) => !allowed.has(client.id))) return res.status(403).json({ success: false, message: "You can only update clients assigned to you." });
@@ -117,7 +122,10 @@ export default async function handler(req, res) {
         return res.status(400).json({ success: false, message: "Client id is required" });
       }
 
-      if (admin.role !== "owner") {
+      if (admin.organizationId) {
+        const { data: ownedClient } = await supabase.from("clients").select("id").eq("id", clientId).eq("organization_id", admin.organizationId).maybeSingle();
+        if (!ownedClient) return res.status(403).json({ success: false, message: "You can only delete clients in your organization." });
+      } else if (admin.role !== "owner") {
         const { data: assignment } = await supabase.from("admin_client_assignments").select("client_id").eq("admin_user_id", admin.userId).eq("client_id", clientId).maybeSingle();
         if (!assignment) return res.status(403).json({ success: false, message: "You can only delete clients assigned to you." });
       }
