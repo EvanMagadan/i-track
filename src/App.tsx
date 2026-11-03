@@ -103,7 +103,11 @@ export default function App() {
       if (!active || !data.session) return;
       const { data: isAdmin } = await client.rpc("is_app_admin");
       const { data: organizationId } = await client.rpc("current_organization_id");
-      if (active && (isAdmin === true || organizationId)) setView("admin");
+      if (active && (isAdmin === true || organizationId)) {
+        localStorage.removeItem("loggedInClientId");
+        setLoggedInClientId(null);
+        setView("admin");
+      }
     });
     return () => { active = false; };
   }, []);

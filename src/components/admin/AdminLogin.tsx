@@ -27,7 +27,10 @@ export function AdminLogin({ onLogin, onSignup, onBack }: { onLogin: () => void;
     });
 
     if (authError) setError("Invalid administrator credentials.");
-    else onLogin();
+    else {
+      localStorage.removeItem("loggedInClientId");
+      onLogin();
+    }
     setLoading(false);
   };
 
