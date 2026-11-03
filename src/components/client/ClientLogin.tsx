@@ -31,13 +31,18 @@ export function ClientLogin({
 
       const { data, error: rpcError } = await supabase.auth.signInWithPassword({ email: `${clientId.trim().toLowerCase()}@clients.i-track.local`, password });
 
-      if (rpcError) throw rpcError;
+      if (rpcError) {
+        throw new Error(rpcError.message === "Invalid login credentials" ? "Invalid Client ID or password." : rpcError.message);
+      }
       const { data: client, error: clientError } = await supabase
         .from("clients")
         .select("id,email,name,address,plan,phone,install_date,due_date,status,payments")
         .eq("auth_user_id", data.user.id)
         .single();
-      if (clientError) throw clientError;
+      if (clientError) {
+        await supabase.auth.signOut();
+        throw new Error("Your account was authenticated, but its client profile could not be loaded. Please contact your provider.");
+      }
       onLogin({
         id: client.id,
         email: client.email ?? "",
@@ -52,7 +57,7 @@ export function ClientLogin({
       });
     } catch (err) {
       console.error("Login error:", err);
-      setError("An unexpected error occurred during login.");
+      setError(err instanceof Error ? err.message : "An unexpected error occurred during login.");
     } finally {
       setLoading(false);
     }
