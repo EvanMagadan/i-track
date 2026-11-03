@@ -15,7 +15,6 @@ export function Landing({ onClientPortal, onAdminPanel }: { onClientPortal: () =
           <p className="text-muted-foreground text-base sm:text-lg leading-relaxed max-w-xl mb-8">I-Track helps clients check their plan, due date, and payment history while giving service teams a clear view of billing and account status.</p>
           <div className="flex flex-wrap items-center gap-3">
             <button onClick={onClientPortal} className="group bg-primary text-primary-foreground rounded-xl px-5 py-3.5 text-left hover:opacity-95 hover:shadow-xl hover:shadow-primary/25 active:scale-[0.99] transition-all duration-150"><div className="flex items-center text-white text-sm font-semibold"><User className="w-4 h-4 mr-2" /><span>Open Client Portal</span><ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" /></div></button>
-            <button onClick={onAdminPanel} className="flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3.5 text-sm font-semibold hover:bg-accent transition-colors"><Settings className="w-4 h-4 text-primary" /><span>Admin Portal</span></button>
           </div>
           <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground"><span className="flex items-center gap-1.5"><CircleCheck className="w-3.5 h-3.5 text-emerald-600" /> Secure account access</span><span className="flex items-center gap-1.5"><CircleCheck className="w-3.5 h-3.5 text-emerald-600" /> Clear payment history</span></div>
         </section>
@@ -28,7 +27,7 @@ export function Landing({ onClientPortal, onAdminPanel }: { onClientPortal: () =
           </div>
         </section>
       </main>
-      <footer className="border-t border-border px-6 py-4 text-left sm:text-center text-xs text-muted-foreground">I-Track v1.0.0</footer>
+      <footer className="border-t border-border px-6 py-4 flex items-center justify-between text-xs text-muted-foreground"><span>I-Track v1.0.0</span><button onClick={onAdminPanel} className="flex items-center gap-1.5 hover:text-foreground transition-colors" aria-label="Staff sign in"><Settings className="w-3.5 h-3.5" /><span>Staff sign in</span></button></footer>
     </div>
   );
 }
