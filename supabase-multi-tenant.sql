@@ -18,6 +18,7 @@ create or replace function public.current_organization_role() returns text langu
 create or replace function public.handle_new_provider() returns trigger language plpgsql security definer set search_path=public as $$
 declare org_id uuid; org_name text;
 begin
+  if coalesce((new.raw_user_meta_data->>'provider_signup')::boolean,false) is not true then return new; end if;
   org_name:=coalesce(new.raw_user_meta_data->>'organization_name',split_part(coalesce(new.email,'provider'),'@',1));
   insert into public.organizations(name,slug,created_by) values (org_name,lower(regexp_replace(org_name||'-'||substr(new.id::text,1,8),'[^a-zA-Z0-9]+','-','g')),new.id) returning id into org_id;
   insert into public.organization_members(organization_id,user_id,role) values(org_id,new.id,'owner');

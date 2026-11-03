@@ -12,7 +12,7 @@ export function ProviderSignup({ onCreated, onBack }: { onCreated: () => void; o
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setError(""); setLoading(true);
     if (!supabase) { setError("Authentication is not configured."); setLoading(false); return; }
-    const { data, error: signUpError } = await supabase.auth.signUp({ email: email.trim(), password, options: { data: { organization_name: company.trim() } } });
+    const { data, error: signUpError } = await supabase.auth.signUp({ email: email.trim(), password, options: { data: { organization_name: company.trim(), provider_signup: true } } });
     if (signUpError) setError(signUpError.message);
     else if (!data.session) setError("Check your email to confirm the provider account, then sign in.");
     else onCreated();
