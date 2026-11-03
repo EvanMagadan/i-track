@@ -229,7 +229,9 @@ export default function App() {
   if (view === "admin-login") {
     return (
       <AdminLogin
-        onLogin={() => {
+        onLogin={async () => {
+          const freshClients = await readClientsFromStore();
+          setClients(freshClients);
           setView("admin");
         }}
         onSignup={() => setView("provider-signup")}
@@ -239,7 +241,7 @@ export default function App() {
   }
 
   if (view === "provider-signup") {
-    return <ProviderSignup onCreated={() => setView("admin")} onBack={() => setView("admin-login")} />;
+    return <ProviderSignup onCreated={async () => { setClients(await readClientsFromStore()); setView("admin"); }} onBack={() => setView("admin-login")} />;
   }
 
   if (view === "admin") {
