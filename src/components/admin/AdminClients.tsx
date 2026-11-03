@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { AlertTriangle, CreditCard, Edit2, Plus, Trash2, X, History } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { EditPaymentModal } from "./EditPaymentModal";
