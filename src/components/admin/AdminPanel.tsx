@@ -87,6 +87,11 @@ export function AdminPanel({
           className={`fixed lg:static top-0 left-0 h-full z-30 lg:z-auto w-56 bg-card border-r border-border shrink-0 transition-transform duration-200 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
           style={{ top: sidebarOpen ? "53px" : undefined }}
         >
+          <div className="p-4 border-b border-border hidden lg:block">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">Workspace</p>
+            <p className="text-sm font-semibold mt-1">Operations console</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Monitor clients, collections, and service health.</p>
+          </div>
           <nav className="p-3 space-y-0.5">
             {navItems.map((item) => (
               <button

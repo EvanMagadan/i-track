@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, LogOut, User } from "lucide-react";
+import { Activity, AlertTriangle, ArrowUpRight, CalendarDays, CreditCard, LogOut, User, Wifi } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { TopBar } from "../shared/TopBar";
 import { daysDiff, formatCurrency, formatDate } from "../../utils";
@@ -31,11 +31,19 @@ export function ClientDashboard({ client, onLogout }: { client: Client; onLogout
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-          <div className="mb-6">
-            <h1 className="text-xl font-bold">Welcome back, {client.name.split(" ")[0]}</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">
-              Account ID: <span className="font-mono text-foreground">{client.id}</span>
-            </p>
+          <div className="relative overflow-hidden rounded-2xl bg-slate-950 text-white p-6 sm:p-8 mb-6 shadow-xl">
+            <div className="absolute -right-10 -top-16 h-56 w-56 rounded-full bg-primary/30 blur-3xl" />
+            <div className="relative flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
+              <div>
+                <div className="flex items-center gap-2 text-blue-200 text-xs font-semibold uppercase tracking-[0.18em] mb-3"><Wifi className="w-4 h-4" /> Client portal</div>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome back, {client.name.split(" ")[0]}</h1>
+                <p className="text-slate-300 text-sm mt-2">Your connection and billing details, all in one place.</p>
+              </div>
+              <div className="sm:text-right">
+                <p className="text-xs text-slate-400 uppercase tracking-wide">Client ID</p>
+                <p className="font-mono text-lg font-semibold mt-1">{client.id}</p>
+              </div>
+            </div>
           </div>
 
           {showWarning && (
@@ -68,7 +76,7 @@ export function ClientDashboard({ client, onLogout }: { client: Client; onLogout
             </div>
           )}
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <div className="bg-card border border-border rounded-xl p-4">
               <p className="text-xs text-muted-foreground uppercase tracking-wide mb-2">Monthly Plan</p>
               <p className="text-2xl font-bold font-mono leading-none">{formatCurrency(client.plan)}</p>
@@ -91,6 +99,14 @@ export function ClientDashboard({ client, onLogout }: { client: Client; onLogout
               <p className="text-sm font-semibold font-mono leading-snug">{client.installDate}</p>
               <p className="text-xs text-muted-foreground mt-1">Installation date</p>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+            <div className="sm:col-span-2 rounded-xl border border-primary/15 bg-primary/[0.04] p-4 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center"><CreditCard className="w-5 h-5" /></div><div><p className="text-sm font-semibold">Your monthly plan</p><p className="text-xs text-muted-foreground mt-0.5">Keep your account active with an on-time payment.</p></div></div>
+              <span className="font-mono font-bold text-sm whitespace-nowrap">{formatCurrency(client.plan)}</span>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-4 flex items-center gap-3"><div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center"><CalendarDays className="w-5 h-5 text-muted-foreground" /></div><div><p className="text-sm font-semibold">Next billing</p><p className="text-xs text-muted-foreground mt-0.5">{formatDate(client.dueDate)}</p></div></div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">

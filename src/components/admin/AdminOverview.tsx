@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, CheckCircle, DollarSign, Users, Eye, EyeOff } from "lucide-react";
+import { AlertTriangle, ArrowUpRight, CheckCircle, DollarSign, Users, Eye, EyeOff, UserPlus } from "lucide-react";
 import { TODAY } from "../../data";
 import { daysDiff, formatCurrency } from "../../utils";
 import type { Client, AdminTab } from "../../types";
@@ -76,6 +76,11 @@ export function AdminOverview({
           </div>
           <p className="text-xs text-muted-foreground mt-2">Monthly Revenue</p>
         </div>
+      </div>
+
+      <div className="rounded-2xl bg-slate-950 text-white p-5 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div><p className="text-blue-200 text-xs uppercase tracking-[0.18em] font-semibold">Today at a glance</p><h2 className="text-lg font-bold mt-1">Keep the network moving.</h2><p className="text-sm text-slate-300 mt-1">{active.length} active accounts · {overdue.length} need attention · {clients.length - active.length} inactive or pending</p></div>
+        <button onClick={() => setTab("clients")} className="inline-flex items-center justify-center gap-2 rounded-lg bg-white text-slate-950 px-4 py-2.5 text-sm font-semibold hover:bg-blue-50 transition-colors whitespace-nowrap"><UserPlus className="w-4 h-4" /> Manage clients <ArrowUpRight className="w-4 h-4" /></button>
       </div>
 
       <div className="space-y-3 sm:space-y-4 mb-6">
