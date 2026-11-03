@@ -6,6 +6,7 @@ import { daysDiff, formatCurrency } from "../../utils";
 import type { Client, ClientFormData, ClientStatus, Payment } from "../../types";
 
 const EMPTY_FORM: ClientFormData = {
+  email: "",
   name: "",
   address: "",
   plan: "500",
@@ -13,7 +14,6 @@ const EMPTY_FORM: ClientFormData = {
   installDate: "",
   dueDate: "",
   status: "active",
-  password: "",
 };
 
 export function AdminClients({
@@ -66,6 +66,7 @@ export function AdminClients({
 
   const openEdit = (c: Client) => {
     setForm({
+      email: c.email,
       name: c.name,
       address: c.address,
       plan: String(c.plan),
@@ -73,7 +74,6 @@ export function AdminClients({
       installDate: c.installDate,
       dueDate: c.dueDate,
       status: c.status,
-      password: "",
     });
     setEditTarget(c);
     setFormError("");
@@ -81,12 +81,8 @@ export function AdminClients({
   };
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.address.trim() || !form.dueDate || !form.installDate) {
+    if (!form.email.trim() || !form.name.trim() || !form.address.trim() || !form.dueDate || !form.installDate) {
       setFormError("Please fill in all required fields.");
-      return;
-    }
-    if (modal === "add" && !form.password.trim()) {
-      setFormError("Initial password is required.");
       return;
     }
 
@@ -97,6 +93,7 @@ export function AdminClients({
       }, 0);
       const newClient: Client = {
         id: `CLI-${String(maxNum + 1).padStart(3, "0")}`,
+        email: form.email.trim(),
         name: form.name.trim(),
         address: form.address.trim(),
         plan: Number(form.plan),
@@ -104,7 +101,6 @@ export function AdminClients({
         installDate: form.installDate,
         dueDate: form.dueDate,
         status: form.status,
-        password: form.password,
         payments: [],
       };
       setClients((prev) => [newClient, ...prev]);
@@ -114,6 +110,7 @@ export function AdminClients({
           c.id === editTarget.id
             ? {
                 ...c,
+                email: form.email.trim(),
                 name: form.name.trim(),
                 address: form.address.trim(),
                 plan: Number(form.plan),
@@ -121,7 +118,6 @@ export function AdminClients({
                 installDate: form.installDate,
                 dueDate: form.dueDate,
                 status: form.status,
-                password: form.password.trim() || c.password,
               }
             : c
         )
@@ -311,6 +307,10 @@ export function AdminClients({
             </div>
             <div className="p-5 space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium block mb-1.5">Email</label>
+              <input type="email" value={form.email} onChange={(e) => f("email", e.target.value)} required className="w-full px-3 py-2 rounded-lg bg-input-background border border-border text-sm" />
+            </div>
                 <div className="sm:col-span-2">
                   <label className="text-xs font-medium block mb-1.5">Full Name <span className="text-destructive">*</span></label>
                   <input type="text" value={form.name} onChange={(e) => f("name", e.target.value)} placeholder="Client full name" className="w-full px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
@@ -345,10 +345,6 @@ export function AdminClients({
                     <option value="disconnected">Disconnected</option>
                     <option value="pending">Pending</option>
                   </select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium block mb-1.5">{modal === "add" ? <>Login Password <span className="text-destructive">*</span></> : "New Password (blank = keep current)"}</label>
-                  <input type="text" value={form.password} onChange={(e) => f("password", e.target.value)} placeholder={modal === "add" ? "Set client login password" : "Leave blank to keep"} className="w-full px-3 py-2 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                 </div>
               </div>
               {formError && (

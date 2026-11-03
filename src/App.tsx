@@ -10,17 +10,17 @@ import { supabase } from "./lib/supabase";
 import { daysDiff } from "./utils";
 import type { Client, View } from "./types";
 
-function formatClientItem(item: any): Client {
+function formatClientItem(item: Record<string, unknown>): Client {
   const normalized: Client = {
-    id: item.id,
-    name: item.name,
-    address: item.address ?? "",
+    id: String(item.id ?? ""),
+    email: String(item.email ?? ""),
+    name: String(item.name ?? ""),
+    address: String(item.address ?? ""),
     plan: Number(item.plan ?? 0),
-    phone: item.phone ?? "",
-    installDate: item.install_date ?? "",
-    dueDate: item.due_date ?? "",
+    phone: String(item.phone ?? ""),
+    installDate: String(item.install_date ?? ""),
+    dueDate: String(item.due_date ?? ""),
     status: (item.status as Client["status"]) ?? "active",
-    password: item.password ?? "",
     payments: Array.isArray(item.payments) ? item.payments : [],
   };
 
@@ -49,32 +49,30 @@ async function readClientsFromStore(): Promise<Client[]> {
 }
 
 async function writeSingleClientToStore(client: Client) {
-  if (!supabase) return;
+  if (!supabase) throw new Error("Supabase is not configured");
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
+  if (!token) throw new Error("Your session has expired. Please sign in again.");
 
-  try {
-    const payload = {
-      id: client.id,
-      name: client.name,
-      address: client.address,
-      plan: client.plan,
-      phone: client.phone,
-      install_date: client.installDate,
-      due_date: client.dueDate,
-      status: client.status,
-      password: client.password,
-      payments: client.payments,
-    };
-
-    const { error } = await supabase.from("clients").upsert(payload);
-    if (error) throw error;
-  } catch (error) {
-    console.error("Failed to save client to Supabase", error);
+  const response = await fetch("/api/clients", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify([client]),
+  });
+  if (!response.ok) {
+    const result = await response.json().catch(() => null);
+    throw new Error(result?.message ?? `Save failed: ${response.status}`);
   }
 }
 
 async function deleteClientFromStore(clientId: string) {
   try {
-    const response = await fetch(`/api/clients?id=${encodeURIComponent(clientId)}`, { method: "DELETE" });
+    const { data } = await supabase?.auth.getSession() ?? { data: { session: null } };
+    const token = data.session?.access_token;
+    const response = await fetch(`/api/clients?id=${encodeURIComponent(clientId)}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
 
     if (!response.ok) {
       throw new Error(`Delete failed: ${response.status}`);
@@ -87,8 +85,6 @@ async function deleteClientFromStore(clientId: string) {
 
 export default function App() {
   const [view, setView] = useState<View>(() => {
-    const savedAdmin = localStorage.getItem("adminLoggedIn");
-    if (savedAdmin === "true") return "admin";
     const savedClientId = localStorage.getItem("loggedInClientId");
     return savedClientId ? "client-dashboard" : "landing";
   });
@@ -97,6 +93,18 @@ export default function App() {
     return localStorage.getItem("loggedInClientId");
   });
   const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) return;
+    const client = supabase;
+    let active = true;
+    void client.auth.getSession().then(async ({ data }) => {
+      if (!active || !data.session) return;
+      const { data: isAdmin } = await client.rpc("is_app_admin");
+      if (active && isAdmin === true) setView("admin");
+    });
+    return () => { active = false; };
+  }, []);
 
   const handleClientLogout = () => {
     setLoggedInClientId(null);
@@ -116,7 +124,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    void loadClients();
+    queueMicrotask(() => { void loadClients(); });
 
     if (!supabase) return;
 
@@ -149,12 +157,8 @@ export default function App() {
     setView("client-dashboard");
   };
 
-  const handleClientActivation = async (c: Client, newPassword: string) => {
-    const updatedClient = { ...c, password: newPassword };
-    
-    setClients((prev) => prev.map((cl) => (cl.id === c.id ? updatedClient : cl)));
-    await writeSingleClientToStore(updatedClient);
-
+  const handleClientActivation = async (c: Client) => {
+    setClients((prev) => prev.map((cl) => (cl.id === c.id ? c : cl)));
     setLoggedInClientId(c.id);
     localStorage.setItem("loggedInClientId", c.id);
     setView("client-dashboard");
@@ -167,7 +171,9 @@ export default function App() {
       nextState.forEach((client) => {
         const matchingOld = prev.find((p) => p.id === client.id);
         if (!matchingOld || JSON.stringify(matchingOld) !== JSON.stringify(client)) {
-          void writeSingleClientToStore(client);
+          void writeSingleClientToStore(client).catch((error) => {
+            console.error("Failed to save client", error);
+          });
         }
       });
       return nextState;
@@ -189,7 +195,6 @@ export default function App() {
   if (view === "client-login") {
     return (
       <ClientLogin
-        clients={clients}
         onLogin={handleClientLogin}
         onSignup={() => setView("client-signup")}
         onBack={() => setView("landing")}
@@ -204,7 +209,6 @@ export default function App() {
   if (view === "client-dashboard" && !loggedInClient) {
     return (
       <ClientLogin
-        clients={clients}
         onLogin={handleClientLogin}
         onSignup={() => setView("client-signup")}
         onBack={() => setView("landing")}
@@ -220,7 +224,6 @@ export default function App() {
     return (
       <AdminLogin
         onLogin={() => {
-          localStorage.setItem("adminLoggedIn", "true");
           setView("admin");
         }}
         onBack={() => setView("landing")}
@@ -235,7 +238,7 @@ export default function App() {
         setClients={handleSetClients}
         deleteClient={deleteClientFromStore}
         onLogout={() => {
-          localStorage.removeItem("adminLoggedIn");
+          void supabase?.auth.signOut();
           setView("landing");
         }}
       />

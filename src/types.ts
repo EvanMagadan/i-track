@@ -19,6 +19,7 @@ export interface Payment {
 
 export interface Client {
   id: string;
+  email: string;
   name: string;
   address: string;
   plan: number;
@@ -26,11 +27,11 @@ export interface Client {
   installDate: string;
   dueDate: string;
   status: ClientStatus;
-  password: string;
   payments: Payment[];
 }
 
 export interface ClientFormData {
+  email: string;
   name: string;
   address: string;
   plan: string;
@@ -38,5 +39,4 @@ export interface ClientFormData {
   installDate: string;
   dueDate: string;
   status: ClientStatus;
-  password: string;
 }

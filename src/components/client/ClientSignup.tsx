@@ -2,6 +2,7 @@ import { useState } from "react";
 import { AlertTriangle, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { TopBar } from "../shared/TopBar";
 import type { Client } from "../../types";
+import { supabase } from "../../lib/supabase";
 
 export function ClientSignup({
   clients,
@@ -9,11 +10,13 @@ export function ClientSignup({
   onBack,
 }: {
   clients: Client[];
-  onActivated: (c: Client, newPassword: string) => void;
+  onActivated: (c: Client) => void;
   onBack: () => void;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [foundClient, setFoundClient] = useState<Client | null>(null);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -22,7 +25,12 @@ export function ClientSignup({
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    const match = clients.find((c) => c.name.toLowerCase() === name.trim().toLowerCase());
+    const normalize = (value: string) => value.replace(/\D/g, "");
+    const match = clients.find((c) =>
+      c.name.toLowerCase() === name.trim().toLowerCase() &&
+      c.email.toLowerCase() === email.trim().toLowerCase() &&
+      normalize(c.phone) === normalize(phone)
+    );
     if (match) {
       setFoundClient(match);
       setStep(2);
@@ -32,7 +40,7 @@ export function ClientSignup({
     }
   };
 
-  const handleSetPassword = (e: React.FormEvent) => {
+  const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
       setError("Password must be at least 6 characters.");
@@ -42,7 +50,22 @@ export function ClientSignup({
       setError("Passwords do not match.");
       return;
     }
-    if (foundClient) onActivated(foundClient, password);
+    if (!foundClient || !supabase) return;
+    setError("");
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+      options: { data: { client_id: foundClient.id } },
+    });
+    if (signUpError) {
+      setError(signUpError.message);
+      return;
+    }
+    if (!data.session) {
+      setError("Account created. Check your email to confirm the account, then sign in.");
+      return;
+    }
+    onActivated(foundClient);
   };
 
   return (
@@ -78,6 +101,14 @@ export function ClientSignup({
                   This must match exactly the name registered by your ISP.
                 </p>
               </div>
+              <div>
+                <label className="text-sm font-medium block mb-1.5">Registered Email</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm" />
+              </div>
+              <div>
+                <label className="text-sm font-medium block mb-1.5">Registered Phone</label>
+                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm" />
+              </div>
               {error && (
                 <div className="flex items-start gap-2 text-destructive text-sm bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2.5">
                   <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
@@ -98,7 +129,7 @@ export function ClientSignup({
                 <div>
                   <p className="text-sm font-semibold text-green-800">Identity Verified</p>
                   <p className="text-xs text-green-700 mt-0.5">
-                    Welcome, {foundClient?.name}. Change your private password below.
+                    Welcome, {foundClient?.name}. Create your secure account password below.
                   </p>
                 </div>
               </div>

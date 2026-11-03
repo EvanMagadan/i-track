@@ -9,12 +9,11 @@ export function ClientLogin({
   onSignup,
   onBack,
 }: {
-  clients: Client[];
   onLogin: (c: Client) => void;
   onSignup: () => void;
   onBack: () => void;
 }) {
-  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState("");
@@ -30,18 +29,27 @@ export function ClientLogin({
         throw new Error("Supabase client is not initialized.");
       }
 
-      const { data, error: rpcError } = await supabase.rpc("verify_client_login", {
-        p_name: name,
-        p_password: password,
-      });
+      const { data, error: rpcError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
 
       if (rpcError) throw rpcError;
-
-      if (data && data.length > 0) {
-        onLogin(data[0] as Client);
-      } else {
-        setError("Invalid client name or password. Please try again.");
-      }
+      const { data: client, error: clientError } = await supabase
+        .from("clients")
+        .select("id,email,name,address,plan,phone,install_date,due_date,status,payments")
+        .eq("auth_user_id", data.user.id)
+        .single();
+      if (clientError) throw clientError;
+      onLogin({
+        id: client.id,
+        email: client.email ?? "",
+        name: client.name,
+        address: client.address ?? "",
+        plan: Number(client.plan ?? 0),
+        phone: client.phone ?? "",
+        installDate: client.install_date ?? "",
+        dueDate: client.due_date ?? "",
+        status: client.status ?? "active",
+        payments: Array.isArray(client.payments) ? client.payments : [],
+      });
     } catch (err) {
       console.error("Login error:", err);
       setError("An unexpected error occurred during login.");
@@ -67,12 +75,12 @@ export function ClientLogin({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium block mb-1.5">Client Name</label>
+              <label className="text-sm font-medium block mb-1.5">Email</label>
               <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
                 autoComplete="username"
                 className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
                 required

@@ -12,7 +12,6 @@ const initialClients = [];
 function sanitizeClient(client) {
   return {
     ...client,
-    password: client.password ?? "",
     payments: Array.isArray(client.payments) ? client.payments : [],
   };
 }
