@@ -46,16 +46,15 @@ export function ClientSignup({
     }
     if (!foundClient || !supabase) return;
     setError("");
-    const response = await fetch("/api/client-activation", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "consume", clientId: foundClient.id, activationCode }) });
+    const response = await fetch("/api/client-activation", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "consume", clientId: foundClient.id, activationCode, password }) });
     const activation = await response.json();
     if (!response.ok) { setError(activation.message ?? "Invalid activation code"); return; }
-    const { data, error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
       email: `${activation.login}@clients.i-track.local`,
       password,
-      options: { data: { client_id: foundClient.id } },
     });
-    if (signUpError) {
-      setError(signUpError.message);
+    if (signInError) {
+      setError(signInError.message);
       return;
     }
     if (!data.session) {

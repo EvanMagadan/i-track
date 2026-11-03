@@ -24,7 +24,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: "Method not allowed" });
   }
   if (!db) return res.status(500).json({ message: "Activation service is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the dev deployment." });
-  const { action, clientId, activationCode } = req.body ?? {};
+  const { action, clientId, activationCode, password } = req.body ?? {};
 
   if (action === "issue") {
     if (!(await isAdmin(req))) return res.status(401).json({ message: "Authentication required" });
@@ -40,12 +40,21 @@ export default async function handler(req, res) {
 
   if (action === "consume") {
     if (typeof clientId !== "string" || typeof activationCode !== "string") return res.status(400).json({ message: "Client ID and activation code are required" });
+    if (typeof password !== "string" || password.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
     const id = clientId.trim();
     const { data, error } = await db.from("client_activation_tokens").select("client_id,token_hash,expires_at,used_at").ilike("client_id", id).single();
     if (error || !data || data.used_at || new Date(data.expires_at) <= new Date() || hash(activationCode.trim()) !== data.token_hash) return res.status(400).json({ message: "Invalid or expired activation code" });
-    await db.from("client_activation_tokens").update({ used_at: new Date().toISOString() }).eq("client_id", data.client_id);
     const { data: client } = await db.from("clients").select("id,auth_login").eq("id", data.client_id).single();
-    return res.status(200).json({ login: client?.auth_login ?? id.toLowerCase() });
+    const login = client?.auth_login ?? data.client_id.toLowerCase();
+    const { data: created, error: createError } = await db.auth.admin.createUser({
+      email: `${login}@clients.i-track.local`,
+      password,
+      email_confirm: true,
+      user_metadata: { client_id: data.client_id },
+    });
+    if (createError && !createError.message.toLowerCase().includes("already been registered")) return res.status(400).json({ message: createError.message });
+    if (created.user) await db.from("client_activation_tokens").update({ used_at: new Date().toISOString() }).eq("client_id", data.client_id);
+    return res.status(200).json({ login });
   }
   return res.status(400).json({ message: "Unknown action" });
 }
