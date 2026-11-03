@@ -61,3 +61,7 @@ Test in this order:
 
 The Free Plan may pause low-activity projects. A few genuine application requests may count as activity, but there is no guaranteed keepalive workaround. Upgrade to Pro if the project must remain continuously available.
 
+## 8. Multiple administrator roles
+
+After the base migration, run [supabase-admin-roles.sql](C:\projects\i-track\supabase-admin-roles.sql). It adds owner, admin, billing, and support roles plus client assignments. The first administrator remains an owner by fallback until an explicit profile is created.
+

@@ -32,9 +32,9 @@ export function AdminOverview({
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-xl font-bold">Dashboard Overview</h1>
+        <h1 className="text-xl font-bold">Welcome to I-Track</h1>
         <p className="text-muted-foreground text-sm">
-          {TODAY.toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+          Your operations dashboard for clients, billing, and service status · {TODAY.toLocaleDateString("en-PH", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
         </p>
       </div>
 
