@@ -143,7 +143,7 @@ export function AdminClients({
       const namePrefix = form.name.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4).padEnd(4, "X");
       const randomPart = crypto.getRandomValues(new Uint32Array(1))[0] % 10000;
       const newClient: Client = {
-        id: `CLI-${namePrefix}-${String(randomPart).padStart(4, "0")}`,
+        id: `${namePrefix}-${String(randomPart).padStart(4, "0")}`,
         email: form.email.trim(),
         name: form.name.trim(),
         address: form.address.trim(),

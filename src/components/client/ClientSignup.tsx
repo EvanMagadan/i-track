@@ -22,8 +22,9 @@ export function ClientSignup({
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    const match = clientId.trim().toUpperCase().startsWith("CLI-")
-      ? ({ id: clientId.trim().toUpperCase(), name: clientId.trim().toUpperCase() } as Client)
+    const normalizedId = clientId.trim().toUpperCase();
+    const match = /^(?:CLI-[A-Z0-9-]+|[A-Z0-9]+-[0-9]{4})$/.test(normalizedId)
+      ? ({ id: normalizedId, name: normalizedId } as Client)
       : null;
     if (match) {
       setFoundClient(match);
