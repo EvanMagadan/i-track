@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.SUPABASE_URL;
+const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_KEY;
 const db = url && serviceKey ? createClient(url, serviceKey) : null;
@@ -18,7 +18,12 @@ async function isAdmin(req) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== "POST" || !db) return res.status(405).json({ message: "Method not allowed" });
+  res.setHeader("Cache-Control", "no-store");
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ message: "Method not allowed" });
+  }
+  if (!db) return res.status(500).json({ message: "Activation service is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in the dev deployment." });
   const { action, clientId, activationCode } = req.body ?? {};
 
   if (action === "issue") {
