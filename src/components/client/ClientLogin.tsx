@@ -82,7 +82,7 @@ export function ClientLogin({
               <input
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
-                placeholder="Example: CLI-001"
+                placeholder="Example: JUAN-4821"
                 autoComplete="username"
                 className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
                 required

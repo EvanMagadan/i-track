@@ -7,7 +7,7 @@ export type View =
   | "provider-signup"
   | "admin";
 
-export type AdminTab = "overview" | "clients" | "calendar" | "alerts";
+export type AdminTab = "overview" | "clients" | "calendar" | "alerts" | "settings";
 export type ClientStatus = "active" | "overdue" | "disconnected" | "pending";
 
 export interface Payment {
