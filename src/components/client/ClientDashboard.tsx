@@ -1,4 +1,4 @@
-import { Activity, AlertTriangle, ArrowUpRight, CalendarDays, CreditCard, LogOut, User, Wifi } from "lucide-react";
+import { Activity, AlertTriangle, CalendarDays, CreditCard, LogOut, User, Wifi } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { TopBar } from "../shared/TopBar";
 import { daysDiff, formatCurrency, formatDate } from "../../utils";
