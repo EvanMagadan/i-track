@@ -34,15 +34,13 @@ export function ClientLogin({
       if (rpcError) {
         throw new Error(rpcError.message === "Invalid login credentials" ? "Invalid Client ID or password." : rpcError.message);
       }
-      const { data: client, error: clientError } = await supabase
-        .from("clients")
-        .select("id,email,name,address,plan,phone,install_date,due_date,status,payments")
-        .eq("auth_user_id", data.user.id)
-        .single();
-      if (clientError) {
+      const profileResponse = await fetch("/api/client-profile", { headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` } });
+      const profileResult = await profileResponse.json();
+      if (!profileResponse.ok) {
         await supabase.auth.signOut();
-        throw new Error("Your account was authenticated, but its client profile could not be loaded. Please contact your provider.");
+        throw new Error(profileResult.message ?? "Your client profile could not be loaded.");
       }
+      const client = profileResult.client;
       onLogin({
         id: client.id,
         email: client.email ?? "",

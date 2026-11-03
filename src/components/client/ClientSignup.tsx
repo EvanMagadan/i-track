@@ -65,15 +65,13 @@ export function ClientSignup({
       setError("Account created, but the session was not returned. Please sign in with your Client ID and password.");
       return;
     }
-    const { data: client, error: clientError } = await supabase
-      .from("clients")
-      .select("id,email,name,address,plan,phone,install_date,due_date,status,payments")
-      .eq("auth_user_id", data.user.id)
-      .single();
-    if (clientError) {
-      setError("Account created, but your client profile is still being linked. Please sign in again.");
+    const profileResponse = await fetch("/api/client-profile", { headers: { Authorization: `Bearer ${data.session.access_token}` } });
+    const profileResult = await profileResponse.json();
+    if (!profileResponse.ok) {
+      setError(profileResult.message ?? "Account created, but your client profile could not be loaded. Please sign in again.");
       return;
     }
+    const client = profileResult.client;
     onActivated({
       id: client.id,
       email: client.email ?? "",
