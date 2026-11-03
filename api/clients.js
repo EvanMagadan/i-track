@@ -69,6 +69,7 @@ export default async function handler(req, res) {
       const payload = body.map((client) => ({
         id: typeof client.id === "string" ? client.id : undefined,
         email: typeof client.email === "string" ? client.email.trim().toLowerCase() : undefined,
+        auth_login: typeof client.id === "string" ? client.id.trim().toLowerCase() : undefined,
         name: typeof client.name === "string" ? client.name.trim() : undefined,
         address: typeof client.address === "string" ? client.address.trim() : "",
         plan: Number.isFinite(Number(client.plan)) ? Number(client.plan) : 0,
@@ -79,8 +80,8 @@ export default async function handler(req, res) {
         payments: Array.isArray(client.payments) ? client.payments : [],
       }));
 
-      if (payload.some((client) => !client.id || !client.email || !client.name || !client.due_date || !client.install_date)) {
-        return res.status(400).json({ success: false, message: "Each client needs an id, email, name, install date, and due date" });
+      if (payload.some((client) => !client.id || !client.name || !client.due_date || !client.install_date)) {
+        return res.status(400).json({ success: false, message: "Each client needs an id, name, install date, and due date" });
       }
 
       const { data, error } = await supabase.from("clients").upsert(payload).select();

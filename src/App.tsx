@@ -203,7 +203,7 @@ export default function App() {
   }
 
   if (view === "client-signup") {
-    return <ClientSignup clients={clients} onActivated={handleClientActivation} onBack={() => setView("client-login")} />;
+    return <ClientSignup onActivated={handleClientActivation} onBack={() => setView("client-login")} />;
   }
 
   if (view === "client-dashboard" && !loggedInClient) {

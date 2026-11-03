@@ -13,7 +13,7 @@ export function ClientLogin({
   onSignup: () => void;
   onBack: () => void;
 }) {
-  const [email, setEmail] = useState("");
+  const [clientId, setClientId] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState("");
@@ -29,7 +29,7 @@ export function ClientLogin({
         throw new Error("Supabase client is not initialized.");
       }
 
-      const { data, error: rpcError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const { data, error: rpcError } = await supabase.auth.signInWithPassword({ email: `${clientId.trim().toLowerCase()}@clients.i-track.local`, password });
 
       if (rpcError) throw rpcError;
       const { data: client, error: clientError } = await supabase
@@ -75,12 +75,11 @@ export function ClientLogin({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium block mb-1.5">Email</label>
+              <label className="text-sm font-medium block mb-1.5">Client ID</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                placeholder="Example: CLI-001"
                 autoComplete="username"
                 className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
                 required
@@ -126,7 +125,7 @@ export function ClientLogin({
 
           <p className="text-sm text-muted-foreground text-center mt-6">
             <button onClick={onSignup} className="text-primary font-semibold hover:underline">
-              Forgot your password?
+              First time here? Activate your account
             </button>
           </p>
         </div>
