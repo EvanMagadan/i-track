@@ -1,5 +1,15 @@
 @custom-variant dark (&:is(.dark *));
 
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse-ring { 0%, 100% { transform: scale(.92); opacity: .35; } 50% { transform: scale(1.08); opacity: .8; } }
+@keyframes bar-rise { from { transform: scaleY(.35); transform-origin: bottom; } to { transform: scaleY(1); transform-origin: bottom; } }
+.animate-fade-up { animation: fade-up .6s ease-out both; }
+.animate-fade-in { animation: fade-in .8s ease-out both; }
+.animate-pulse-ring { animation: pulse-ring 3s ease-in-out infinite; }
+.animate-bar { animation: bar-rise .7s cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .animate-fade-up, .animate-fade-in, .animate-pulse-ring, .animate-bar { animation: none; } }
+
 :root {
   --font-size: 16px;
   --background: #f8fafc;
