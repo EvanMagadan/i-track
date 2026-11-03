@@ -25,16 +25,18 @@ function mapClient(item) {
 
 async function requireAdmin(req) {
   const authorization = req.headers.authorization;
-  if (!supabaseUrl || !supabaseAnonKey || !authorization?.startsWith("Bearer ")) return false;
+  if (!supabaseUrl || !supabaseAnonKey || !authorization?.startsWith("Bearer ")) return null;
 
   const authClient = createClient(supabaseUrl, supabaseAnonKey, {
     global: { headers: { Authorization: authorization } },
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const { data: userData, error: userError } = await authClient.auth.getUser();
-  if (userError || !userData.user) return false;
+  if (userError || !userData.user) return null;
   const { data, error } = await authClient.rpc("is_app_admin");
-  return !error && data === true;
+  if (error || data !== true) return null;
+  const roleResult = await authClient.rpc("current_admin_role");
+  return { userId: userData.user.id, role: roleResult.error ? "owner" : roleResult.data ?? "owner" };
 }
 
 export default async function handler(req, res) {
@@ -45,13 +47,22 @@ export default async function handler(req, res) {
     return res.status(405).json({ success: false, message: "Method not allowed" });
   }
 
-  if (!(await requireAdmin(req))) {
+  const admin = await requireAdmin(req);
+  if (!admin) {
     return res.status(401).json({ success: false, message: "Authentication required" });
   }
 
   if (supabase) {
     if (req.method === "GET") {
-      const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false });
+      let query = supabase.from("clients").select("*").order("created_at", { ascending: false });
+      if (admin.role !== "owner") {
+        const { data: assignments, error: assignmentError } = await supabase.from("admin_client_assignments").select("client_id").eq("admin_user_id", admin.userId);
+        if (assignmentError) return res.status(500).json({ success: false, message: assignmentError.message });
+        const assignedIds = (assignments ?? []).map((assignment) => assignment.client_id);
+        if (assignedIds.length === 0) return res.status(200).json([]);
+        query = query.in("id", assignedIds);
+      }
+      const { data, error } = await query;
 
       if (error) {
         return res.status(500).json({ success: false, message: error.message });
@@ -84,6 +95,12 @@ export default async function handler(req, res) {
         return res.status(400).json({ success: false, message: "Each client needs an id, name, install date, and due date" });
       }
 
+      if (admin.role !== "owner") {
+        const { data: assignments } = await supabase.from("admin_client_assignments").select("client_id").eq("admin_user_id", admin.userId).in("client_id", payload.map((client) => client.id));
+        const allowed = new Set((assignments ?? []).map((assignment) => assignment.client_id));
+        if (payload.some((client) => !allowed.has(client.id))) return res.status(403).json({ success: false, message: "You can only update clients assigned to you." });
+      }
+
       const { data, error } = await supabase.from("clients").upsert(payload).select();
 
       if (error) {
@@ -98,6 +115,11 @@ export default async function handler(req, res) {
 
       if (!clientId || typeof clientId !== "string") {
         return res.status(400).json({ success: false, message: "Client id is required" });
+      }
+
+      if (admin.role !== "owner") {
+        const { data: assignment } = await supabase.from("admin_client_assignments").select("client_id").eq("admin_user_id", admin.userId).eq("client_id", clientId).maybeSingle();
+        if (!assignment) return res.status(403).json({ success: false, message: "You can only delete clients assigned to you." });
       }
 
       const { error } = await supabase.from("clients").delete().eq("id", clientId);

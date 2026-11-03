@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CreditCard, Edit2, Plus, Trash2, X, History } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { EditPaymentModal } from "./EditPaymentModal";
@@ -40,6 +40,47 @@ export function AdminClients({
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [activationCode, setActivationCode] = useState<string | null>(null);
+  const [assignmentData, setAssignmentData] = useState<{ role: string; admins: { userId: string; email: string; displayName: string; role: string }[]; assignments: { admin_user_id: string; client_id: string }[] } | null>(null);
+  const [selectedAdmin, setSelectedAdmin] = useState("");
+  const [selectedClient, setSelectedClient] = useState("");
+  const [assignmentError, setAssignmentError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      if (!supabase) return;
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) return;
+      const response = await fetch("/api/admin-assignments", { headers: { Authorization: `Bearer ${data.session.access_token}` } });
+      if (!response.ok) return;
+      const result = await response.json();
+      if (!cancelled) {
+        setAssignmentData(result);
+        setSelectedAdmin(result.admins?.[0]?.userId ?? "");
+        setSelectedClient(result.assignments?.[0]?.client_id ?? clients[0]?.id ?? "");
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [clients]);
+
+  const updateAssignment = async (assigned: boolean) => {
+    if (!selectedAdmin || !selectedClient || !supabase) return;
+    setAssignmentError("");
+    const { data } = await supabase.auth.getSession();
+    const response = await fetch("/api/admin-assignments", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` },
+      body: JSON.stringify({ adminUserId: selectedAdmin, clientId: selectedClient, assigned }),
+    });
+    if (!response.ok) {
+      const result = await response.json().catch(() => ({}));
+      setAssignmentError(result.message ?? "Could not update assignment.");
+      return;
+    }
+    setAssignmentData((current) => current ? { ...current, assignments: assigned
+      ? [...current.assignments.filter((item) => !(item.admin_user_id === selectedAdmin && item.client_id === selectedClient)), { admin_user_id: selectedAdmin, client_id: selectedClient }]
+      : current.assignments.filter((item) => !(item.admin_user_id === selectedAdmin && item.client_id === selectedClient)) } : current);
+  };
 
   const filtered = useMemo(() => {
     const query = search.toLowerCase();
@@ -214,6 +255,33 @@ export function AdminClients({
           Add Client
         </button>
       </div>
+
+      {assignmentData?.role === "owner" && (
+        <div className="bg-card border border-border rounded-xl p-4 sm:p-5 mb-6">
+          <div className="flex items-start justify-between gap-4 mb-4">
+            <div><h2 className="font-semibold">Client access assignments</h2><p className="text-sm text-muted-foreground mt-1">Choose which clients each administrator can manage.</p></div>
+            <span className="text-xs rounded-full bg-primary/10 text-primary px-2.5 py-1 font-medium">Owner only</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto_auto] gap-2">
+            <select value={selectedAdmin} onChange={(e) => setSelectedAdmin(e.target.value)} className="px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm">
+              {assignmentData.admins.map((admin) => <option key={admin.userId} value={admin.userId}>{admin.displayName || admin.email || admin.userId}</option>)}
+            </select>
+            <select value={selectedClient} onChange={(e) => setSelectedClient(e.target.value)} className="px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm">
+              {clients.map((client) => <option key={client.id} value={client.id}>{client.id} — {client.name}</option>)}
+            </select>
+            <button onClick={() => void updateAssignment(true)} className="px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">Assign</button>
+            <button onClick={() => void updateAssignment(false)} className="px-4 py-2.5 rounded-lg border border-border text-sm font-semibold hover:bg-accent">Remove</button>
+          </div>
+          {assignmentError && <p className="mt-2 text-sm text-destructive">{assignmentError}</p>}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {assignmentData.assignments.map((assignment) => {
+              const admin = assignmentData.admins.find((item) => item.userId === assignment.admin_user_id);
+              const client = clients.find((item) => item.id === assignment.client_id);
+              return <span key={`${assignment.admin_user_id}-${assignment.client_id}`} className="text-xs rounded-full border border-border px-2.5 py-1 text-muted-foreground">{admin?.displayName || admin?.email || "Admin"} → {client?.id || assignment.client_id}</span>;
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="bg-card border border-border rounded-xl overflow-hidden">
         <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-col gap-3 sm:gap-4 lg:flex-row lg:items-center lg:justify-between">
