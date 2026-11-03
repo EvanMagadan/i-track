@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { StatusBadge } from "../shared/StatusBadge";
 import { TODAY } from "../../data";
@@ -15,18 +15,15 @@ export function AdminCalendar({ clients }: { clients: Client[] }) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const monthName = viewDate.toLocaleDateString("en-PH", { month: "long", year: "numeric" });
 
-  const dueMap = useMemo(() => {
-    const map: Record<number, Client[]> = {};
-    clients.forEach((c) => {
-      const d = new Date(c.dueDate);
-      if (d.getFullYear() === year && d.getMonth() === month) {
-        const day = d.getDate();
-        if (!map[day]) map[day] = [];
-        map[day].push(c);
-      }
-    });
-    return map;
-  }, [clients, year, month]);
+  const dueMap: Record<number, Client[]> = {};
+  clients.forEach((c) => {
+    const d = new Date(c.dueDate);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      const day = d.getDate();
+      if (!dueMap[day]) dueMap[day] = [];
+      dueMap[day].push(c);
+    }
+  });
 
   const cells: (number | null)[] = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1)];
   const todayDay = TODAY.getDate();

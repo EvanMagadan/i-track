@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AlertTriangle, Eye, EyeOff, Settings } from "lucide-react";
 import { TopBar } from "../shared/TopBar";
-import { ADMIN_CREDENTIALS } from "../../data";
+import { supabase } from "../../lib/supabase";
 
 export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: () => void }) {
   const [username, setUsername] = useState("");
@@ -15,13 +15,19 @@ export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: (
     setError("");
     setLoading(true);
 
-    await new Promise((r) => setTimeout(r, 400));
-
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      onLogin();
-    } else {
-      setError("Invalid administrator credentials.");
+    if (!supabase) {
+      setError("Authentication is not configured.");
+      setLoading(false);
+      return;
     }
+
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: username.trim(),
+      password,
+    });
+
+    if (authError) setError("Invalid administrator credentials.");
+    else onLogin();
     setLoading(false);
   };
 
@@ -40,12 +46,12 @@ export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: (
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium block mb-1.5">Username</label>
+              <label className="text-sm font-medium block mb-1.5">Email</label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Administrator username"
+                placeholder="Administrator email"
                 autoComplete="username"
                 className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
                 required
