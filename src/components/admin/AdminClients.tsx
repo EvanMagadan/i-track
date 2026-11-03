@@ -4,6 +4,7 @@ import { StatusBadge } from "../shared/StatusBadge";
 import { EditPaymentModal } from "./EditPaymentModal";
 import { daysDiff, formatCurrency } from "../../utils";
 import type { Client, ClientFormData, ClientStatus, Payment } from "../../types";
+import { supabase } from "../../lib/supabase";
 
 const EMPTY_FORM: ClientFormData = {
   email: "",
@@ -38,7 +39,7 @@ export function AdminClients({
   const [sortBy, setSortBy] = useState<"name" | "dueDate" | "status" | "plan">("name");
   const [formError, setFormError] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
-
+  const [activationCode, setActivationCode] = useState<string | null>(null);
   const filtered = useMemo(() => {
     const query = search.toLowerCase();
     const visible = clients.filter(
@@ -77,22 +78,30 @@ export function AdminClients({
     });
     setEditTarget(c);
     setFormError("");
+    setActivationCode(null);
     setModal("edit");
   };
 
+  const issueActivationCode = async () => {
+    if (!editTarget || !supabase) return;
+    const { data } = await supabase.auth.getSession();
+    const response = await fetch("/api/client-activation", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session?.access_token ?? ""}` }, body: JSON.stringify({ action: "issue", clientId: editTarget.id }) });
+    const result = await response.json();
+    if (response.ok) setActivationCode(result.code);
+    else setFormError(result.message ?? "Could not create activation code.");
+  };
+
   const handleSave = () => {
-    if (!form.email.trim() || !form.name.trim() || !form.address.trim() || !form.dueDate || !form.installDate) {
+    if (!form.name.trim() || !form.address.trim() || !form.dueDate || !form.installDate) {
       setFormError("Please fill in all required fields.");
       return;
     }
 
     if (modal === "add") {
-      const maxNum = clients.reduce((max, c) => {
-        const n = parseInt(c.id.replace("CLI-", ""), 10);
-        return isNaN(n) ? max : Math.max(max, n);
-      }, 0);
+      const namePrefix = form.name.trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 4).padEnd(4, "X");
+      const randomPart = crypto.getRandomValues(new Uint32Array(1))[0] % 10000;
       const newClient: Client = {
-        id: `CLI-${String(maxNum + 1).padStart(3, "0")}`,
+        id: `${namePrefix}-${String(randomPart).padStart(4, "0")}`,
         email: form.email.trim(),
         name: form.name.trim(),
         address: form.address.trim(),
@@ -248,7 +257,7 @@ export function AdminClients({
                     <td className="px-3 sm:px-4 py-3.5 font-mono font-semibold">{formatCurrency(c.plan)}</td>
                     <td className="px-3 sm:px-4 py-3.5 font-mono text-xs whitespace-nowrap">
                       <span className={days > 0 ? "text-destructive font-semibold" : ""}>{c.dueDate}</span>
-                      {days > 0 && <span className="ml-1.5 inline-flex bg-red-100 text-red-700 text-xs px-1.5 py-0.5 rounded font-semibold">{days}d late</span>}
+                      {days > 0 && <span className="ml-1.5 inline-flex bg-red-100 text-red-700 dark:bg-[#492930] dark:text-[#e7a0aa] text-xs px-1.5 py-0.5 rounded font-semibold">{days}d late</span>}
                     </td>
                     <td className="px-3 sm:px-4 py-3.5"><StatusBadge status={c.status} /></td>
                     <td className="px-3 sm:px-4 py-3.5">
@@ -351,6 +360,13 @@ export function AdminClients({
                 <div className="flex items-center gap-2 text-destructive text-xs bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                   {formError}
+                </div>
+              )}
+              {modal === "edit" && editTarget && (
+                <div className="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100 px-3 py-3 text-sm text-blue-900">
+                  <div className="flex items-center justify-between gap-3"><span className="font-medium">Client activation</span><button type="button" onClick={() => void issueActivationCode()} className="font-semibold hover:underline">Generate code</button></div>
+                  {activationCode && <p className="mt-2 font-mono text-lg tracking-[0.3em]">{activationCode}</p>}
+                  <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">Code expires in 24 hours and can be used once.</p>
                 </div>
               )}
             </div>

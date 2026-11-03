@@ -1,5 +1,15 @@
 @custom-variant dark (&:is(.dark *));
 
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse-ring { 0%, 100% { transform: scale(.92); opacity: .35; } 50% { transform: scale(1.08); opacity: .8; } }
+@keyframes bar-rise { from { transform: scaleY(.35); transform-origin: bottom; } to { transform: scaleY(1); transform-origin: bottom; } }
+.animate-fade-up { animation: fade-up .6s ease-out both; }
+.animate-fade-in { animation: fade-in .8s ease-out both; }
+.animate-pulse-ring { animation: pulse-ring 3s ease-in-out infinite; }
+.animate-bar { animation: bar-rise .7s cubic-bezier(.2,.8,.2,1) both; }
+@media (prefers-reduced-motion: reduce) { .animate-fade-up, .animate-fade-in, .animate-pulse-ring, .animate-bar { animation: none; } }
+
 :root {
   --font-size: 16px;
   --background: #f8fafc;
@@ -42,24 +52,26 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.145 0.015 250);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.145 0 0);
+  --card: oklch(0.205 0.02 250);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.145 0 0);
+  --popover: oklch(0.205 0.02 250);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --primary: oklch(0.65 0.18 255);
+  --primary-foreground: oklch(0.98 0.01 250);
+  --secondary: oklch(0.27 0.025 250);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
+  --muted: oklch(0.24 0.02 250);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --accent: oklch(0.29 0.03 250);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.396 0.141 25.723);
   --destructive-foreground: oklch(0.637 0.237 25.331);
-  --border: oklch(0.269 0 0);
-  --input: oklch(0.269 0 0);
+  --border: oklch(0.34 0.025 250);
+  --input: oklch(0.27 0.025 250);
+  --input-background: oklch(0.24 0.02 250);
+  --switch-background: oklch(0.4 0.03 250);
   --ring: oklch(0.439 0 0);
   --font-weight-medium: 500;
   --font-weight-normal: 400;

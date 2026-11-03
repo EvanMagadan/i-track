@@ -3,12 +3,21 @@ import { AlertTriangle, Eye, EyeOff, Settings } from "lucide-react";
 import { TopBar } from "../shared/TopBar";
 import { supabase } from "../../lib/supabase";
 
-export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: () => void }) {
+export function AdminLogin({ onLogin, onSignup, onBack }: { onLogin: () => void; onSignup: () => void; onBack: () => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetMessage, setResetMessage] = useState("");
+
+  const handleForgotPassword = async () => {
+    setError(""); setResetMessage("");
+    if (!supabase || !username.trim()) { setError("Enter your administrator email first."); return; }
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(username.trim(), { redirectTo: window.location.origin });
+    if (resetError) setError(resetError.message);
+    else setResetMessage("If that account exists, a password reset link has been sent.");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +36,10 @@ export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: (
     });
 
     if (authError) setError("Invalid administrator credentials.");
-    else onLogin();
+    else {
+      localStorage.removeItem("loggedInClientId");
+      onLogin();
+    }
     setLoading(false);
   };
 
@@ -93,6 +105,9 @@ export function AdminLogin({ onLogin, onBack }: { onLogin: () => void; onBack: (
             >
               {loading ? "Authenticating…" : "Access Admin Panel"}
             </button>
+            <button type="button" onClick={() => void handleForgotPassword()} className="w-full text-sm text-primary font-semibold hover:underline">Forgot password?</button>
+            <button type="button" onClick={onSignup} className="w-full text-sm text-primary font-semibold hover:underline">Create a provider account</button>
+            {resetMessage && <p className="text-sm text-green-700 dark:text-green-300 text-center">{resetMessage}</p>}
           </form>
         </div>
       </main>

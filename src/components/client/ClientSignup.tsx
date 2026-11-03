@@ -5,18 +5,15 @@ import type { Client } from "../../types";
 import { supabase } from "../../lib/supabase";
 
 export function ClientSignup({
-  clients,
   onActivated,
   onBack,
 }: {
-  clients: Client[];
   onActivated: (c: Client) => void;
   onBack: () => void;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [activationCode, setActivationCode] = useState("");
   const [foundClient, setFoundClient] = useState<Client | null>(null);
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -25,18 +22,16 @@ export function ClientSignup({
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    const normalize = (value: string) => value.replace(/\D/g, "");
-    const match = clients.find((c) =>
-      c.name.toLowerCase() === name.trim().toLowerCase() &&
-      c.email.toLowerCase() === email.trim().toLowerCase() &&
-      normalize(c.phone) === normalize(phone)
-    );
+    const normalizedId = clientId.trim().toUpperCase();
+    const match = /^(?:CLI-[A-Z0-9-]+|[A-Z0-9]+-[0-9]{4})$/.test(normalizedId)
+      ? ({ id: normalizedId, name: normalizedId } as Client)
+      : null;
     if (match) {
       setFoundClient(match);
       setStep(2);
       setError("");
     } else {
-      setError("Name not found in our records. Check with your provider that you are pre-registered.");
+      setError("Enter the Client ID printed on your activation instructions.");
     }
   };
 
@@ -52,20 +47,44 @@ export function ClientSignup({
     }
     if (!foundClient || !supabase) return;
     setError("");
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: email.trim(),
+    const response = await fetch("/api/client-activation", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "consume", clientId: foundClient.id, activationCode, password }) });
+    const activation = await response.json();
+    if (!response.ok) { setError(activation.message ?? "Invalid activation code"); return; }
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email: `${activation.login}@clients.i-track.local`,
       password,
-      options: { data: { client_id: foundClient.id } },
     });
-    if (signUpError) {
-      setError(signUpError.message);
+    if (signInError) {
+      setError(signInError.message);
       return;
     }
     if (!data.session) {
-      setError("Account created. Check your email to confirm the account, then sign in.");
+      setError("Account created. Sign in with your Client ID and new password.");
       return;
     }
-    onActivated(foundClient);
+    if (!data.user) {
+      setError("Account created, but the session was not returned. Please sign in with your Client ID and password.");
+      return;
+    }
+    const profileResponse = await fetch("/api/client-profile", { headers: { Authorization: `Bearer ${data.session.access_token}` } });
+    const profileResult = await profileResponse.json();
+    if (!profileResponse.ok) {
+      setError(profileResult.message ?? "Account created, but your client profile could not be loaded. Please sign in again.");
+      return;
+    }
+    const client = profileResult.client;
+    onActivated({
+      id: client.id,
+      email: client.email ?? "",
+      name: client.name,
+      address: client.address ?? "",
+      plan: Number(client.plan ?? 0),
+      phone: client.phone ?? "",
+      installDate: client.install_date ?? "",
+      dueDate: client.due_date ?? "",
+      status: client.status ?? "active",
+      payments: Array.isArray(client.payments) ? client.payments : [],
+    });
   };
 
   return (
@@ -74,7 +93,7 @@ export function ClientSignup({
       <main className="flex-1 flex items-center justify-center px-6 py-16">
         <div className="w-full max-w-sm">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold mb-1">Forgot Password</h1>
+            <h1 className="text-2xl font-bold mb-1">Activate Client Account</h1>
             <div className="flex gap-2 mt-4">
               {([1, 2] as const).map((s) => (
                 <div
@@ -88,26 +107,22 @@ export function ClientSignup({
           {step === 1 ? (
             <form onSubmit={handleVerify} className="space-y-4">
               <div>
-                <label className="text-sm font-medium block mb-1.5">Registered Client Name</label>
+                <label className="text-sm font-medium block mb-1.5">Client ID</label>
                 <input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter the name your provider used"
+                  value={clientId}
+                  onChange={(e) => setClientId(e.target.value)}
+                  placeholder="Example: JUAN-4821"
                   className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
                   required
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  This must match exactly the name registered by your ISP.
+                  Use the Client ID and one-time activation code provided by your ISP.
                 </p>
               </div>
               <div>
-                <label className="text-sm font-medium block mb-1.5">Registered Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm" />
-              </div>
-              <div>
-                <label className="text-sm font-medium block mb-1.5">Registered Phone</label>
-                <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm" />
+                <label className="text-sm font-medium block mb-1.5">Activation Code</label>
+                <input type="text" value={activationCode} onChange={(e) => setActivationCode(e.target.value)} required inputMode="numeric" className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm" />
               </div>
               {error && (
                 <div className="flex items-start gap-2 text-destructive text-sm bg-destructive/10 border border-destructive/20 rounded-lg px-3 py-2.5">
@@ -124,11 +139,11 @@ export function ClientSignup({
             </form>
           ) : (
             <form onSubmit={handleSetPassword} className="space-y-4">
-              <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-3 flex items-start gap-2">
-                <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+              <div className="bg-green-50 border border-green-200 dark:bg-green-950/40 dark:border-green-900 rounded-lg px-3 py-3 flex items-start gap-2">
+                <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-300 mt-0.5 shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold text-green-800">Identity Verified</p>
-                  <p className="text-xs text-green-700 mt-0.5">
+                  <p className="text-sm font-semibold text-green-800 dark:text-green-200">Identity Verified</p>
+                  <p className="text-xs text-green-700 dark:text-green-300 mt-0.5">
                     Welcome, {foundClient?.name}. Create your secure account password below.
                   </p>
                 </div>
@@ -176,7 +191,7 @@ export function ClientSignup({
                 type="submit"
                 className="w-full bg-primary text-primary-foreground rounded-lg py-2.5 text-sm font-semibold hover:opacity-90 transition"
               >
-                Change Password
+                Create Account
               </button>
             </form>
           )}

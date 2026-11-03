@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Activity, Bell, Calendar, LogOut, Menu, Users, Wifi } from "lucide-react";
+import { Activity, Bell, Calendar, LogOut, Menu, Settings, Users, Wifi } from "lucide-react";
 import { AdminOverview } from "./AdminOverview";
 import { AdminClients } from "./AdminClients";
 import { AdminCalendar } from "./AdminCalendar";
 import { AdminAlerts } from "./AdminAlerts";
+import { AdminSettings } from "./AdminSettings";
 import { RecordPaymentModal } from "./RecordPaymentModal";
+import { ThemeToggle } from "../shared/ThemeToggle";
 import { advanceDueDate, daysDiff } from "../../utils";
 import type { AdminTab, Client, Payment } from "../../types";
 
@@ -42,6 +44,7 @@ export function AdminPanel({
     { id: "clients", label: "Clients", icon: <Users className="w-4 h-4" />, badge: clients.length },
     { id: "calendar", label: "Billing Calendar", icon: <Calendar className="w-4 h-4" /> },
     { id: "alerts", label: "Alerts", icon: <Bell className="w-4 h-4" />, badge: alertCount || undefined },
+    { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
   ];
 
   const handleTabChange = (id: AdminTab) => {
@@ -57,6 +60,7 @@ export function AdminPanel({
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <header className="shrink-0 border-b border-border bg-card px-4 sm:px-6 py-3.5 flex items-center justify-between z-20">
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1.5 rounded-md hover:bg-accent transition-colors lg:hidden">
             <Menu className="w-4 h-4" />
           </button>
@@ -87,6 +91,11 @@ export function AdminPanel({
           className={`fixed lg:static top-0 left-0 h-full z-30 lg:z-auto w-56 bg-card border-r border-border shrink-0 transition-transform duration-200 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
           style={{ top: sidebarOpen ? "53px" : undefined }}
         >
+          <div className="p-4 border-b border-border hidden lg:block">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-semibold">Workspace</p>
+            <p className="text-sm font-semibold mt-1">Operations console</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">Monitor clients, collections, and service health.</p>
+          </div>
           <nav className="p-3 space-y-0.5">
             {navItems.map((item) => (
               <button
@@ -110,6 +119,7 @@ export function AdminPanel({
           {tab === "clients" && <AdminClients clients={clients} setClients={setClients} deleteClient={deleteClient} onOpenPayment={setPaymentTarget} />}
           {tab === "calendar" && <AdminCalendar clients={clients} />}
           {tab === "alerts" && <AdminAlerts overdue={overdue} onRecordPayment={setPaymentTarget} />}
+          {tab === "settings" && <AdminSettings />}
         </main>
       </div>
 

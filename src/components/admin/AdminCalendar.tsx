@@ -87,7 +87,7 @@ export function AdminCalendar({ clients }: { clients: Client[] }) {
                     </span>
                     <div className="mt-0.5 space-y-0.5">
                       {due.slice(0, 2).map((c) => (
-                        <div key={c.id} className={`text-xs px-1 py-0.5 rounded truncate font-medium ${c.status === "overdue" ? "bg-red-100 text-red-700" : "bg-blue-100 text-blue-700"}`} title={`${c.name} — ${formatCurrency(c.plan)}`}>
+                        <div key={c.id} className={`text-xs px-1 py-0.5 rounded truncate font-medium ${c.status === "overdue" ? "bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-200" : "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-200"}`} title={`${c.name} — ${formatCurrency(c.plan)}`}>
                           {c.name.split(" ")[0]}
                         </div>
                       ))}
@@ -103,8 +103,8 @@ export function AdminCalendar({ clients }: { clients: Client[] }) {
 
       <div className="flex flex-wrap gap-4 mb-4">
         {[
-          { color: "bg-blue-100 border-blue-200", label: "Active — due" },
-          { color: "bg-red-100 border-red-200", label: "Overdue" },
+          { color: "bg-blue-100 border-blue-200 dark:bg-blue-950/60 dark:border-blue-900", label: "Active — due" },
+          { color: "bg-red-100 border-red-200 dark:bg-red-950/60 dark:border-red-900", label: "Overdue" },
           { color: "bg-primary/10 border-primary/20", label: "Today" },
         ].map((l) => (
           <div key={l.label} className="flex items-center gap-1.5 text-xs text-muted-foreground">

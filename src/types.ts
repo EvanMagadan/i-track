@@ -2,11 +2,13 @@ export type View =
   | "landing"
   | "client-login"
   | "client-signup"
+  | "client-reset"
   | "client-dashboard"
   | "admin-login"
+  | "provider-signup"
   | "admin";
 
-export type AdminTab = "overview" | "clients" | "calendar" | "alerts";
+export type AdminTab = "overview" | "clients" | "calendar" | "alerts" | "settings";
 export type ClientStatus = "active" | "overdue" | "disconnected" | "pending";
 
 export interface Payment {

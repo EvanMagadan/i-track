@@ -3,8 +3,10 @@ import { Landing } from "./components/client/Landing";
 import { ClientLogin } from "./components/client/ClientLogin";
 import { ClientSignup } from "./components/client/ClientSignup";
 import { ClientDashboard } from "./components/client/ClientDashboard";
+import { ClientPasswordReset } from "./components/client/ClientPasswordReset";
 import { AdminLogin } from "./components/admin/AdminLogin";
 import { AdminPanel } from "./components/admin/AdminPanel";
+import { ProviderSignup } from "./components/admin/ProviderSignup";
 import { INITIAL_CLIENTS } from "./data";
 import { supabase } from "./lib/supabase";
 import { daysDiff } from "./utils";
@@ -101,7 +103,12 @@ export default function App() {
     void client.auth.getSession().then(async ({ data }) => {
       if (!active || !data.session) return;
       const { data: isAdmin } = await client.rpc("is_app_admin");
-      if (active && isAdmin === true) setView("admin");
+      const { data: organizationId } = await client.rpc("current_organization_id");
+      if (active && (isAdmin === true || organizationId)) {
+        localStorage.removeItem("loggedInClientId");
+        setLoggedInClientId(null);
+        setView("admin");
+      }
     });
     return () => { active = false; };
   }, []);
@@ -197,20 +204,24 @@ export default function App() {
       <ClientLogin
         onLogin={handleClientLogin}
         onSignup={() => setView("client-signup")}
+        onReset={() => setView("client-reset")}
         onBack={() => setView("landing")}
       />
     );
   }
 
   if (view === "client-signup") {
-    return <ClientSignup clients={clients} onActivated={handleClientActivation} onBack={() => setView("client-login")} />;
+    return <ClientSignup onActivated={handleClientActivation} onBack={() => setView("client-login")} />;
   }
+
+  if (view === "client-reset") return <ClientPasswordReset onBack={() => setView("client-login")} />;
 
   if (view === "client-dashboard" && !loggedInClient) {
     return (
       <ClientLogin
         onLogin={handleClientLogin}
         onSignup={() => setView("client-signup")}
+        onReset={() => setView("client-reset")}
         onBack={() => setView("landing")}
       />
     );
@@ -223,12 +234,19 @@ export default function App() {
   if (view === "admin-login") {
     return (
       <AdminLogin
-        onLogin={() => {
+        onLogin={async () => {
+          const freshClients = await readClientsFromStore();
+          setClients(freshClients);
           setView("admin");
         }}
+        onSignup={() => setView("provider-signup")}
         onBack={() => setView("landing")}
       />
     );
+  }
+
+  if (view === "provider-signup") {
+    return <ProviderSignup onCreated={async () => { setClients(await readClientsFromStore()); setView("admin"); }} onBack={() => setView("admin-login")} />;
   }
 
   if (view === "admin") {

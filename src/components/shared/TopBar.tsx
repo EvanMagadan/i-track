@@ -1,4 +1,5 @@
 import { ChevronLeft, Wifi } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function TopBar({
   onBack,
@@ -29,7 +30,10 @@ export function TopBar({
         <Wifi className="w-5 h-5 text-primary" />
         <span className="font-bold tracking-tight text-sm">{title}</span>
       </div>
-      {rightSlot}
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        {rightSlot}
+      </div>
     </header>
   );
 }

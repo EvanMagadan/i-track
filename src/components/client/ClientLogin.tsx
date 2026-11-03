@@ -8,12 +8,14 @@ export function ClientLogin({
   onLogin,
   onSignup,
   onBack,
+  onReset,
 }: {
   onLogin: (c: Client) => void;
   onSignup: () => void;
   onBack: () => void;
+  onReset: () => void;
 }) {
-  const [email, setEmail] = useState("");
+  const [clientId, setClientId] = useState("");
   const [password, setPassword] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [error, setError] = useState("");
@@ -29,15 +31,18 @@ export function ClientLogin({
         throw new Error("Supabase client is not initialized.");
       }
 
-      const { data, error: rpcError } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      const { data, error: rpcError } = await supabase.auth.signInWithPassword({ email: `${clientId.trim().toLowerCase()}@clients.i-track.local`, password });
 
-      if (rpcError) throw rpcError;
-      const { data: client, error: clientError } = await supabase
-        .from("clients")
-        .select("id,email,name,address,plan,phone,install_date,due_date,status,payments")
-        .eq("auth_user_id", data.user.id)
-        .single();
-      if (clientError) throw clientError;
+      if (rpcError) {
+        throw new Error(rpcError.message === "Invalid login credentials" ? "Invalid Client ID or password." : rpcError.message);
+      }
+      const profileResponse = await fetch("/api/client-profile", { headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` } });
+      const profileResult = await profileResponse.json();
+      if (!profileResponse.ok) {
+        await supabase.auth.signOut();
+        throw new Error(profileResult.message ?? "Your client profile could not be loaded.");
+      }
+      const client = profileResult.client;
       onLogin({
         id: client.id,
         email: client.email ?? "",
@@ -52,7 +57,7 @@ export function ClientLogin({
       });
     } catch (err) {
       console.error("Login error:", err);
-      setError("An unexpected error occurred during login.");
+      setError(err instanceof Error ? err.message : "An unexpected error occurred during login.");
     } finally {
       setLoading(false);
     }
@@ -75,12 +80,11 @@ export function ClientLogin({
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium block mb-1.5">Email</label>
+              <label className="text-sm font-medium block mb-1.5">Client ID</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                value={clientId}
+                onChange={(e) => setClientId(e.target.value)}
+                placeholder="Example: JUAN-4821"
                 autoComplete="username"
                 className="w-full px-3 py-2.5 rounded-lg bg-input-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
                 required
@@ -124,9 +128,11 @@ export function ClientLogin({
             </button>
           </form>
 
+          <button onClick={onReset} className="w-full mt-4 text-sm text-primary font-semibold hover:underline">Forgot password?</button>
+
           <p className="text-sm text-muted-foreground text-center mt-6">
             <button onClick={onSignup} className="text-primary font-semibold hover:underline">
-              Forgot your password?
+              First time here? Activate your account
             </button>
           </p>
         </div>
