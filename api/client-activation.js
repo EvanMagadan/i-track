@@ -7,14 +7,17 @@ const anonKey = process.env.SUPABASE_ANON_KEY ?? process.env.VITE_SUPABASE_ANON_
 const db = url && serviceKey ? createClient(url, serviceKey) : null;
 const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
 
-async function isAdmin(req) {
+async function getAdminContext(req) {
   const authorization = req.headers.authorization;
-  if (!url || !anonKey || !authorization?.startsWith("Bearer ")) return false;
+  if (!url || !anonKey || !authorization?.startsWith("Bearer ")) return null;
   const client = createClient(url, anonKey, { global: { headers: { Authorization: authorization } }, auth: { persistSession: false } });
   const { data: user } = await client.auth.getUser();
-  if (!user.user) return false;
-  const { data } = await client.rpc("is_app_admin");
-  return data === true;
+  if (!user.user) return null;
+  const { data: organizationId } = await client.rpc("current_organization_id");
+  const { data: role } = await client.rpc("current_organization_role");
+  if (organizationId && ["owner", "admin"].includes(role)) return { organizationId };
+  const { data: legacyAdmin } = await client.rpc("is_app_admin");
+  return legacyAdmin === true ? { organizationId: null } : null;
 }
 
 export default async function handler(req, res) {
@@ -27,10 +30,13 @@ export default async function handler(req, res) {
   const { action, clientId, activationCode, password } = req.body ?? {};
 
   if (action === "issue") {
-    if (!(await isAdmin(req))) return res.status(401).json({ message: "Authentication required" });
+    const admin = await getAdminContext(req);
+    if (!admin) return res.status(401).json({ message: "Authentication required" });
     if (typeof clientId !== "string") return res.status(400).json({ message: "Client ID is required" });
     const requestedId = clientId.trim();
-    const { data: client, error: clientError } = await db.from("clients").select("id").ilike("id", requestedId).single();
+    let clientQuery = db.from("clients").select("id").ilike("id", requestedId);
+    if (admin.organizationId) clientQuery = clientQuery.eq("organization_id", admin.organizationId);
+    const { data: client, error: clientError } = await clientQuery.single();
     if (clientError || !client) return res.status(404).json({ message: "Client not found" });
     const code = crypto.randomInt(100000, 999999).toString();
     const { error } = await db.from("client_activation_tokens").upsert({ client_id: client.id, token_hash: hash(code), expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), used_at: null });
@@ -42,6 +48,10 @@ export default async function handler(req, res) {
     if (typeof clientId !== "string" || typeof activationCode !== "string") return res.status(400).json({ message: "Client ID and activation code are required" });
     if (typeof password !== "string" || password.length < 6) return res.status(400).json({ message: "Password must be at least 6 characters" });
     const id = clientId.trim();
+    const forwardedFor = req.headers["x-forwarded-for"] ?? req.socket?.remoteAddress ?? "unknown";
+    const rateKey = hash(`${id.toLowerCase()}:${String(forwardedFor).split(",")[0]}`);
+    const { data: allowed, error: rateError } = await db.rpc("check_activation_rate_limit", { rate_key: rateKey });
+    if (rateError || allowed !== true) return res.status(429).json({ message: "Too many activation attempts. Please wait 15 minutes and try again." });
     const { data, error } = await db.from("client_activation_tokens").select("client_id,token_hash,expires_at,used_at").ilike("client_id", id).single();
     if (error || !data || data.used_at || new Date(data.expires_at) <= new Date() || hash(activationCode.trim()) !== data.token_hash) return res.status(400).json({ message: "Invalid or expired activation code" });
     const { data: client } = await db.from("clients").select("id,auth_login").eq("id", data.client_id).single();
