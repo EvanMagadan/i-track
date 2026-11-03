@@ -6,7 +6,7 @@ const STORAGE_KEY = "i-track-theme";
 function getInitialTheme() {
   const saved = window.localStorage.getItem(STORAGE_KEY);
   if (saved === "dark" || saved === "light") return saved;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  return "light";
 }
 
 function applyTheme(theme: "dark" | "light") {
